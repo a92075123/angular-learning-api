@@ -1,0 +1,70 @@
+# ============================================
+# Spring Boot 應用程式設定
+# ============================================
+
+server:
+  port: 8080
+
+spring:
+  application:
+    name: angular-learning-api
+
+  # MySQL 資料庫設定
+  datasource:
+    url: jdbc:mysql://localhost:3306/angular_database?useSSL=false&serverTimezone=Asia/Taipei&allowPublicKeyRetrieval=true&characterEncoding=UTF-8
+    username: root
+    password:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+    # HikariCP 連線池設定
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 20
+      idle-timeout: 30000
+      pool-name: SpringBootHikariCP
+      max-lifetime: 1800000
+      connection-timeout: 30000
+
+# MyBatis 設定
+mybatis:
+  # Mapper XML 檔案位置
+  mapper-locations: classpath:mappers/*.xml
+  # 實體類別別名套件
+  type-aliases-package: com.example.api.model
+  configuration:
+    # 駝峰命名轉換（資料庫下底線 -> Java 駝峰）
+    map-underscore-to-camel-case: true
+    # 日誌輸出
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+# 日誌設定
+logging:
+  level:
+    com.example.api: DEBUG
+    org.springframework.web: INFO
+
+---
+# 開發環境設定
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+---
+# 生產環境設定
+spring:
+  config:
+    activate:
+      on-profile: prod
+  datasource:
+    hikari:
+      minimum-idle: 10
+      maximum-pool-size: 50
+
+mybatis:
+  configuration:
+    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
+
+logging:
+  level:
+    com.example.api: INFO
