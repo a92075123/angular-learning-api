@@ -47,16 +47,17 @@ public class TodoController {
     /**
      * 取得單一待辦事項
      */
-    @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<Todo>> getById(@PathVariable Long id) {
-        Todo todo = todoService.findById(id);
+    @GetMapping("/getOne/{id}")
+    public ResponseEntity<?> getById(@PathVariable(required = false) Long id) {
+        log.info("收到查詢請求: {}", id);
+        List<Todo>  todo = todoService.findById(id);
 
         if (todo == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ApiResponse.error("待辦事項不存在"));
         }
 
-        return ResponseEntity.ok(ApiResponse.success(todo));
+        return ResponseEntity.ok(todo);
     }
 
     /**

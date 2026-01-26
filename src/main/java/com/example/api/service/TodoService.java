@@ -42,7 +42,7 @@ public class TodoService {
     /**
      * 根據 ID 查詢
      */
-    public Todo findById(Long id) {
+    public List<Todo>  findById(Long id) {
         log.debug("查詢待辦事項，id = {}", id);
         return todoMapper.findById(id);
     }
@@ -61,33 +61,33 @@ public class TodoService {
      * 更新待辦事項
      */
    
-    public Todo update(Long id, Todo todo) {
-        log.info("更新待辦事項，id = {}", id);
-
-        Todo existing = todoMapper.findById(id);
-        if (existing == null) {
-            throw new RuntimeException("待辦事項不存在: " + id);
-        }
-
-        todoMapper.update(todo);
-        return todoMapper.findById(id);
-    }
+//    public Todo update(Long id, Todo todo) {
+//        log.info("更新待辦事項，id = {}", id);
+//
+//        Todo existing = todoMapper.findById(id);
+//        if (existing == null) {
+//            throw new RuntimeException("待辦事項不存在: " + id);
+//        }
+//
+//        todoMapper.update(todo);
+//        return todoMapper.findById(id);
+//    }
 
     /**
      * 切換完成狀態
      */
    
-    public Todo toggleCompleted(Long id) {
-        log.info("切換完成狀態，id = {}", id);
-
-        Todo existing = todoMapper.findById(id);
-        if (existing == null) {
-            throw new RuntimeException("待辦事項不存在: " + id);
-        }
-
-        todoMapper.toggleCompleted(id);
-        return todoMapper.findById(id);
-    }
+//    public Todo toggleCompleted(Long id) {
+//        log.info("切換完成狀態，id = {}", id);
+//
+//        Todo existing = todoMapper.findById(id);
+//        if (existing == null) {
+//            throw new RuntimeException("待辦事項不存在: " + id);
+//        }
+//
+//        todoMapper.toggleCompleted(id);
+//        return todoMapper.findById(id);
+//    }
 
     /**
      * 刪除待辦事項

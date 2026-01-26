@@ -30,7 +30,7 @@ public interface TodoMapper {
      * 根據 ID 查詢
      */
     @Select("SELECT * FROM todos WHERE id = #{id}")
-    Todo findById(@Param("id") Long id);
+    List<Todo> findById(@Param("id") Long id);
 
     /**
      * 新增待辦事項
