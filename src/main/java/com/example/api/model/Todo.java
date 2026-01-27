@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
 /**
@@ -34,6 +35,22 @@ public class Todo {
      * 待辦事項內文
      */
     private String todoContent;
+
+    /**
+     * 創建日期
+     */
+    private Timestamp created_at;
+
+
+    /**
+     * 更新時間
+     */
+    private Timestamp updated_at;
+
+    /**
+     * 資料順序
+     */
+    private Integer sort_no;
 
 
 }

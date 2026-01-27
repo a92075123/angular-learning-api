@@ -1,72 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-
-<!--
-    TodoMapper XML 範例
-
-    這是 MyBatis XML 方式的 Mapper 範例
-    可以用於複雜查詢（如動態 SQL）
-
-    注意：目前使用註解方式（TodoMapper.java），
-    此檔案作為 XML 方式的參考範例
--->
 <mapper namespace="com.example.api.mapper.TodoMapper">
 
-    <!-- 結果映射 -->
-    <resultMap id="todoResultMap" type="com.example.api.model.Todo">
-        <id property="id" column="id"/>
-        <result property="title" column="title"/>
-        <result property="completed" column="completed"/>
-        <result property="priority" column="priority"/>
-        <result property="createdAt" column="created_at"/>
-        <result property="updatedAt" column="updated_at"/>
-    </resultMap>
-
-    <!-- 動態查詢範例 -->
-    <select id="findByCondition" resultMap="todoResultMap">
-        SELECT * FROM todos
-        <where>
-            <if test="completed != null">
-                AND completed = #{completed}
-            </if>
-            <if test="priority != null and priority != ''">
-                AND priority = #{priority}
-            </if>
-            <if test="keyword != null and keyword != ''">
-                AND title LIKE CONCAT('%', #{keyword}, '%')
-            </if>
-        </where>
-        ORDER BY
-        <choose>
-            <when test="orderBy == 'priority'">
-                FIELD(priority, 'high', 'medium', 'low')
-            </when>
-            <when test="orderBy == 'title'">
-                title
-            </when>
-            <otherwise>
-                created_at DESC
-            </otherwise>
-        </choose>
-    </select>
-
-    <!-- 批次新增範例 -->
-    <insert id="batchInsert" parameterType="list">
-        INSERT INTO todos (title, completed, priority, created_at, updated_at)
-        VALUES
-        <foreach collection="list" item="todo" separator=",">
-            (#{todo.title}, #{todo.completed}, #{todo.priority}, NOW(), NOW())
-        </foreach>
-    </insert>
-
-    <!-- 批次更新範例 -->
-    <update id="batchUpdateCompleted">
+    <update id="updateTodoLocation">
         UPDATE todos
-        SET completed = #{completed}, updated_at = NOW()
+        SET sort_no = CASE id
+        <foreach collection="list" item="item" index="idx">
+            WHEN #{item.id} THEN #{idx} + 1
+        </foreach>
+        END
         WHERE id IN
-        <foreach collection="ids" item="id" open="(" separator="," close=")">
-            #{id}
+        <foreach collection="list" item="item" open="(" separator="," close=")">
+            #{item.id}
         </foreach>
     </update>
 

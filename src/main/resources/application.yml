@@ -32,8 +32,8 @@ mybatis:
   # 實體類別別名套件
   type-aliases-package: com.example.api.model
   configuration:
-    # 駝峰命名轉換（資料庫下底線 -> Java 駝峰）
-    map-underscore-to-camel-case: true
+#    # 駝峰命名轉換（資料庫下底線 -> Java 駝峰）
+#    map-underscore-to-camel-case: true
     # 日誌輸出
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
 

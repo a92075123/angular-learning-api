@@ -14,66 +14,23 @@ import java.util.List;
 @Mapper
 public interface TodoMapper {
 
-    /**
-     * 查詢所有待辦事項
-     */
-    @Select("SELECT * FROM todos ORDER BY created_at ASC")
+    @Select("SELECT * FROM todos ORDER BY sort_no ASC ")
     List<Todo> findAll();
 
-    /**
-     * 根據完成狀態查詢
-     */
-    @Select("SELECT * FROM todos WHERE completed = #{completed} ORDER BY created_at DESC")
-    List<Todo> findByCompleted(@Param("completed") Boolean completed);
+    @Select("SELECT * FROM todos WHERE todoTitle = #{todoTitle} ORDER BY sort_no ASC")
+    List<Todo> findByTitle(@Param("todoTitle") String todoTitle);
 
-    /**
-     * 根據 ID 查詢
-     */
-    @Select("SELECT * FROM todos WHERE id = #{id}")
-    List<Todo> findById(@Param("id") Long id);
-
-    /**
-     * 新增待辦事項
-     */
-    @Insert("INSERT INTO todos (todoTitle, todoContent, created_at, updated_at) " +
-            "VALUES (#{todoTitle}, #{todoContent},NOW(), NOW())")
+    @Insert("INSERT INTO todos (todoTitle, todoContent, created_at, updated_at, sort_no) " +
+            "VALUES (#{todoTitle}, #{todoContent},NOW(), NOW(),(SELECT COALESCE(MAX(sort_no), 0) + 1 FROM (SELECT sort_no FROM todos) AS temp))")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int insert(Todo todo);
 
-    /**
-     * 更新待辦事項
-     */
-    @Update("UPDATE todos SET title = #{title}, completed = #{completed}, " +
-            "priority = #{priority}, updated_at = NOW() WHERE id = #{id}")
-    int update(Todo todo);
+    void updateTodoLocation(@Param("list") List<Todo> todo);
 
-    /**
-     * 切換完成狀態
-     */
-    @Update("UPDATE todos SET completed = NOT completed, updated_at = NOW() WHERE id = #{id}")
-    int toggleCompleted(@Param("id") Long id);
-
-    /**
-     * 刪除待辦事項
-     */
     @Delete("DELETE FROM todos WHERE id = #{id}")
     int deleteById(@Param("id") Long id);
 
-    /**
-     * 刪除所有已完成的待辦事項
-     */
-    @Delete("DELETE FROM todos WHERE completed = true")
-    int deleteCompleted();
+    @Delete("DELETE FROM todos")
+    void deleteAllData();
 
-    /**
-     * 統計數量
-     */
-    @Select("SELECT COUNT(*) FROM todos")
-    int count();
-
-    /**
-     * 統計已完成數量
-     */
-    @Select("SELECT COUNT(*) FROM todos WHERE completed = true")
-    int countCompleted();
 }
