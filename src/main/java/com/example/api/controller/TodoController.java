@@ -57,10 +57,20 @@ public class TodoController {
     }
 
     /**
+     * 更新待辦事項
+     */
+    @PostMapping("/update")
+    public ResponseEntity<?> update(@RequestBody Todo todo) {
+        log.info("收到新增請求: {}", todo);
+        todoService.update(todo);
+        return ResponseEntity.status(HttpStatus.CREATED).body(null);
+    }
+
+    /**
      * 刪除待辦事項
      */
     @PostMapping("/delete")
-    public ResponseEntity<?> create(@RequestBody String id) {
+    public ResponseEntity<?> delete(@RequestBody String id) {
         log.info("收到新增請求: {}", id);
         todoService.delete(Long.parseLong(id));
         return ResponseEntity.status(HttpStatus.OK).body(null);

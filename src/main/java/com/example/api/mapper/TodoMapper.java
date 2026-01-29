@@ -25,6 +25,9 @@ public interface TodoMapper {
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int insert(Todo todo);
 
+    @Update("UPDATE todos SET todoTitle = #{todoTitle}, todoContent = #{todoContent}, updated_at = NOW() WHERE id = #{id}")
+    int update(Todo todo);
+
     void updateTodoLocation(@Param("list") List<Todo> todo);
 
     @Delete("DELETE FROM todos WHERE id = #{id}")

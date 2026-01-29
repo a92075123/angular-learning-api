@@ -22,6 +22,7 @@ import java.util.Map;
 @Transactional
 public class TodoService {
 
+
     @Autowired
     private TodoMapper todoMapper;
 
@@ -67,4 +68,11 @@ public class TodoService {
         }
     }
 
+    /**
+     * 更新待辦事項
+     */
+    public void update(Todo todo) {
+        todoMapper.update(todo);
+    }
 }
+
