@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE generatorConfiguration
+  PUBLIC "-//mybatis.org//DTD MyBatis Generator Configuration 1.0//EN"
+  "https://mybatis.org/dtd/mybatis-generator-config_1_0.dtd">
+
+<generatorConfiguration>
+
+  <context id="context" targetRuntime="MyBatis3">
+
+    <!-- 1. commentGenerator 要在 jdbcConnection 之前 -->
+    <commentGenerator>
+      <property name="suppressAllComments" value="true"/>
+    </commentGenerator>
+
+    <!-- 2. jdbcConnection -->
+    <jdbcConnection driverClass="com.mysql.cj.jdbc.Driver"
+      connectionURL="jdbc:mysql://localhost:3306/angular_database"
+      userId="root"
+      password="">
+      <property name="nullCatalogMeansCurrent" value="true"/>
+    </jdbcConnection>
+
+    <!-- 3. javaTypeResolver（可選） -->
+    <javaTypeResolver>
+      <property name="forceBigDecimals" value="false"/>
+    </javaTypeResolver>
+
+    <!-- 4. javaModelGenerator - 注意 targetProject 和 targetPackage -->
+    <javaModelGenerator targetProject="src/main/java"
+      targetPackage="com.example.api.generate.po">
+      <property name="enableSubPackages" value="true"/>
+      <property name="trimStrings" value="true"/>
+    </javaModelGenerator>
+
+    <!-- 5. sqlMapGenerator -->
+    <!--    <sqlMapGenerator targetProject="src/main/resources"-->
+    <!--      targetPackage="mapper">-->
+    <!--      <property name="enableSubPackages" value="true"/>-->
+    <!--    </sqlMapGenerator>-->
+
+    <!-- 6. javaClientGenerator -->
+    <!--    <javaClientGenerator type="XMLMAPPER"-->
+    <!--      targetProject="src/main/java"-->
+    <!--      targetPackage="com.example.api.generate.mapper">-->
+    <!--      <property name="enableSubPackages" value="true"/>-->
+    <!--    </javaClientGenerator>-->
+
+    <!-- 7. table -->
+    <table schema="angular_database" tableName="user" domainObjectName="User"
+      enableCountByExample="false"
+      enableUpdateByExample="false"
+      enableDeleteByExample="false"
+      enableSelectByExample="false"
+      selectByExampleQueryId="false"
+    >
+    </table>
+
+    <table schema="angular_database" tableName="todos" domainObjectName="Todo"
+      enableCountByExample="false"
+      enableUpdateByExample="false"
+      enableDeleteByExample="false"
+      enableSelectByExample="false"
+      selectByExampleQueryId="false"
+    >
+    </table>
+
+  </context>
+</generatorConfiguration>

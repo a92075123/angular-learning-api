@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
-        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.example.api.mapper.TodoMapper">
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.api.mappers.TodoMapper">
 
-    <update id="updateTodoLocation">
-        UPDATE todos
-        SET sort_no = CASE id
-        <foreach collection="list" item="item" index="idx">
-            WHEN #{item.id} THEN #{idx} + 1
-        </foreach>
-        END
-        WHERE id IN
-        <foreach collection="list" item="item" open="(" separator="," close=")">
-            #{item.id}
-        </foreach>
-    </update>
+  <update id="updateTodoLocation">
+    UPDATE todos
+    SET sort_no = CASE id
+    <foreach collection="list" item="item" index="idx">
+      WHEN #{item.id} THEN #{idx} + 1
+    </foreach>
+    END
+    WHERE id IN
+    <foreach collection="list" item="item" open="(" separator="," close=")">
+      #{item.id}
+    </foreach>
+  </update>
 
 </mapper>

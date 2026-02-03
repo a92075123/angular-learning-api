@@ -1,7 +1,7 @@
 package com.example.api.service;
 
-import com.example.api.mapper.TodoMapper;
-import com.example.api.model.Todo;
+import com.example.api.generate.po.Todo;
+import com.example.api.mappers.TodoMapper;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,7 +41,7 @@ public class TodoService {
    * 新增待辦事項
    */
   public Todo create(Todo todo) {
-    log.info("新增待辦事項: {}", todo.getTodoTitle());
+    log.info("新增待辦事項: {}", todo.getTodotitle());
     todoMapper.insert(todo);
     return todo;
   }
