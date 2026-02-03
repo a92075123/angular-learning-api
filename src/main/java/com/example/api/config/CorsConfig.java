@@ -22,6 +22,9 @@ public class CorsConfig {
     config.addAllowedOrigin("http://localhost:4200");
     config.addAllowedOrigin("http://127.0.0.1:4200");
 
+    // 允許的請求標頭
+    config.addAllowedHeader("*");
+
     // 允許攜帶認證資訊（如 Cookie
     // 允許的 HTTP 方法
     config.addAllowedMethod("GET");
@@ -30,7 +33,7 @@ public class CorsConfig {
     config.addAllowedMethod("DELETE");
     config.addAllowedMethod("PATCH");
     config.addAllowedMethod("OPTIONS");
-        
+
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
     source.registerCorsConfiguration("/api/**", config);
 
