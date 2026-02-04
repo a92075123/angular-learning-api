@@ -2,7 +2,7 @@ package com.example.api.generate.po;
 
 import java.util.Date;
 
-public class User {
+public class UserEntity {
     private Long id;
 
     private String email;
@@ -12,6 +12,8 @@ public class User {
     private Date createdAt;
 
     private Date updatedAt;
+
+    private String account;
 
     public Long getId() {
         return id;
@@ -51,5 +53,13 @@ public class User {
 
     public void setUpdatedAt(Date updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public String getAccount() {
+        return account;
+    }
+
+    public void setAccount(String account) {
+        this.account = account == null ? null : account.trim();
     }
 }

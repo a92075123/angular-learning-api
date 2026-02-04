@@ -1,6 +1,7 @@
 package com.example.api.mappers;
 
-import com.example.api.generate.po.Todo;
+import com.example.api.dto.TodoDto;
+import com.example.api.generate.po.TodoEntity;
 import java.util.List;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Insert;
@@ -20,20 +21,20 @@ import org.apache.ibatis.annotations.Update;
 public interface TodoMapper {
 
   @Select("SELECT * FROM todos ORDER BY sort_no ASC ")
-  List<Todo> findAll();
+  List<TodoDto> findAll();
 
   @Select("SELECT * FROM todos WHERE todotitle = #{todotitle} ORDER BY sort_no ASC")
-  List<Todo> findByTitle(@Param("todotitle") String todotitle);
+  List<TodoDto> findByTitle(@Param("todotitle") String todotitle);
 
   @Insert("INSERT INTO todos (todotitle, todocontent, created_at, updated_at, sort_no) " +
       "VALUES (#{todotitle}, #{todocontent},NOW(), NOW(),(SELECT COALESCE(MAX(sort_no), 0) + 1 FROM (SELECT sort_no FROM todos) AS temp))")
   @Options(useGeneratedKeys = true, keyProperty = "id")
-  int insert(Todo todo);
+  int insert(TodoEntity todo);
 
   @Update("UPDATE todos SET todotitle = #{todotitle}, todocontent = #{todocontent}, updated_at = NOW() WHERE id = #{id}")
-  int update(Todo todo);
+  int update(TodoEntity todo);
 
-  void updateTodoLocation(@Param("list") List<Todo> todo);
+  void updateTodoLocation(@Param("list") List<TodoDto> todo);
 
   @Delete("DELETE FROM todos WHERE id = #{id}")
   int deleteById(@Param("id") Long id);

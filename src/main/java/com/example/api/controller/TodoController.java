@@ -1,6 +1,6 @@
 package com.example.api.controller;
 
-import com.example.api.generate.po.Todo;
+import com.example.api.dto.TodoDto;
 import com.example.api.model.ApiResponse;
 import com.example.api.service.TodoService;
 import java.util.List;
@@ -28,42 +28,41 @@ public class TodoController {
    */
   @GetMapping("/getAll")
   public ResponseEntity<?> getAll() {
-    List<Todo> list = todoService.findAll();
-    return ResponseEntity.ok(list);
+    List<TodoDto> list = todoService.findAll();
+    return ResponseEntity.ok(ApiResponse.success(list));
   }
 
   /**
-   * 取得單一待辦事項s
+   * 取得單一待辦事項
    */
   @GetMapping("/getOne/{title}")
   public ResponseEntity<?> getOne(@PathVariable(required = false) String title) {
     log.info("收到查詢請求: {}", title);
-    List<Todo> todo = todoService.findByTitle(title);
+    List<TodoDto> todo = todoService.findByTitle(title);
     if (todo == null) {
-      return ResponseEntity.status(HttpStatus.NOT_FOUND)
-          .body(ApiResponse.error("待辦事項不存在"));
+      return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error("待辦事項不存在"));
     }
-    return ResponseEntity.ok(todo);
+    return ResponseEntity.ok(ApiResponse.success(todo));
   }
 
   /**
    * 新增待辦事項
    */
   @PostMapping("/create")
-  public ResponseEntity<?> create(@RequestBody Todo todo) {
+  public ResponseEntity<?> create(@RequestBody TodoDto todo) {
     log.info("收到新增請求: {}", todo);
     todoService.create(todo);
-    return ResponseEntity.status(HttpStatus.CREATED).body(null);
+    return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("新增成功"));
   }
 
   /**
    * 更新待辦事項
    */
   @PostMapping("/update")
-  public ResponseEntity<?> update(@RequestBody Todo todo) {
+  public ResponseEntity<?> update(@RequestBody TodoDto todo) {
     log.info("收到新增請求: {}", todo);
     todoService.update(todo);
-    return ResponseEntity.status(HttpStatus.CREATED).body(null);
+    return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("更新成功"));
   }
 
   /**
@@ -73,16 +72,16 @@ public class TodoController {
   public ResponseEntity<?> delete(@RequestBody String id) {
     log.info("收到新增請求: {}", id);
     todoService.delete(Long.parseLong(id));
-    return ResponseEntity.status(HttpStatus.OK).body(null);
+    return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success("刪除成功"));
   }
 
   /**
    * 更新待辦事項項次
    */
   @PostMapping("/updateTodoLocation")
-  public ResponseEntity<?> updateTodoLocation(@RequestBody List<Todo> req) {
+  public ResponseEntity<?> updateTodoLocation(@RequestBody List<TodoDto> req) {
     log.info("收到新增請求: {}", req);
     todoService.updateTodoLocation(req);
-    return ResponseEntity.status(HttpStatus.OK).body(null);
+    return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success("更新成功"));
   }
 }

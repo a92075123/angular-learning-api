@@ -1,6 +1,9 @@
 package com.example.api.service;
 
-import com.example.api.generate.po.Todo;
+import com.example.api.config.exception.GlobalException;
+import com.example.api.config.exception.ResponseStatus;
+import com.example.api.dto.TodoDto;
+import com.example.api.generate.po.TodoEntity;
 import com.example.api.mappers.TodoMapper;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
@@ -25,31 +28,34 @@ public class TodoService {
   /**
    * 取得所有待辦事項
    */
-  public List<Todo> findAll() {
+  public List<TodoDto> findAll() {
     return todoMapper.findAll();
   }
 
   /**
    * 根據 標題 查詢
    */
-  public List<Todo> findByTitle(String title) {
-    log.debug("查詢待辦事項，title = {}", title);
+  public List<TodoDto> findByTitle(String title) {
     return todoMapper.findByTitle(title);
   }
 
   /**
    * 新增待辦事項
    */
-  public Todo create(Todo todo) {
-    log.info("新增待辦事項: {}", todo.getTodotitle());
-    todoMapper.insert(todo);
-    return todo;
+  public void create(TodoDto todo) {
+    TodoEntity entity = new TodoEntity();
+    entity.setTodotitle(todo.getTodotitle());
+    entity.setTodocontent(todo.getTodocontent());
+    int count = todoMapper.insert(entity);
+    if (count == 0) {
+      throw new GlobalException(ResponseStatus.INSERT_ERROR.getMessage());
+    }
   }
 
   /**
    * 更新待辦事項項次
    */
-  public void updateTodoLocation(List<Todo> list) {
+  public void updateTodoLocation(List<TodoDto> list) {
     todoMapper.updateTodoLocation(list);
   }
 
@@ -60,15 +66,22 @@ public class TodoService {
     log.info("刪除待辦事項，id = {}", id);
     int rows = todoMapper.deleteById(id);
     if (rows == 0) {
-      throw new RuntimeException("待辦事項不存在: " + id);
+      throw new GlobalException(ResponseStatus.DELETE_ERROR.getMessage());
     }
   }
 
   /**
    * 更新待辦事項
    */
-  public void update(Todo todo) {
-    todoMapper.update(todo);
+  public void update(TodoDto todo) {
+    TodoEntity entity = new TodoEntity();
+    entity.setId(todo.getId());
+    entity.setTodotitle(todo.getTodotitle());
+    entity.setTodocontent(todo.getTodocontent());
+    int count = todoMapper.update(entity);
+    if (count == 0) {
+      throw new GlobalException(ResponseStatus.UPDATE_ERROR.getMessage());
+    }
   }
 }
 
