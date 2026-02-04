@@ -37,6 +37,11 @@ mybatis:
     # 日誌輸出
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
 
+# JWT 設定
+jwt:
+  secret: SaDhMmXkzKSBOSTvznXq3NEUbyWTJKrJUEue7hu3pn4=
+  expiration: 86400000  # Token 有效期 24 小時（毫秒）
+
 # 日誌設定
 logging:
   level:

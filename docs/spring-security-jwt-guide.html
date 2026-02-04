@@ -1,0 +1,1529 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spring Security + JWT 設計說明</title>
+  <style>
+    /* ========== 基礎排版 ========== */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: "Microsoft JhengHei", "Noto Sans TC", "Segoe UI", sans-serif;
+      line-height: 1.8;
+      color: #2c3e50;
+      background: #f8f9fa;
+      padding: 0;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 60px 50px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.08);
+    }
+
+    /* ========== 封面 ========== */
+    .cover {
+      text-align: center;
+      padding: 80px 0 60px;
+      border-bottom: 3px solid #3498db;
+      margin-bottom: 50px;
+    }
+
+    .cover h1 {
+      font-size: 2.2em;
+      color: #2c3e50;
+      margin-bottom: 15px;
+    }
+
+    .cover .subtitle {
+      font-size: 1.1em;
+      color: #7f8c8d;
+      margin-bottom: 30px;
+    }
+
+    .cover .tech-stack {
+      display: inline-flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .cover .tech-stack span {
+      background: #ecf0f1;
+      color: #2c3e50;
+      padding: 4px 14px;
+      border-radius: 15px;
+      font-size: 0.85em;
+    }
+
+    /* ========== 目錄 ========== */
+    .toc {
+      background: #f7f9fc;
+      border: 1px solid #e0e6ed;
+      border-radius: 8px;
+      padding: 30px 35px;
+      margin-bottom: 50px;
+      page-break-after: always;
+    }
+
+    .toc h2 {
+      font-size: 1.4em;
+      color: #2c3e50;
+      margin-bottom: 15px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #3498db;
+    }
+
+    .toc ol {
+      list-style: none;
+      counter-reset: toc-counter;
+    }
+
+    .toc > ol > li {
+      counter-increment: toc-counter;
+      margin-bottom: 6px;
+    }
+
+    .toc > ol > li::before {
+      content: counter(toc-counter) ". ";
+      font-weight: bold;
+      color: #3498db;
+    }
+
+    .toc a {
+      color: #2c3e50;
+      text-decoration: none;
+    }
+
+    .toc a:hover {
+      color: #3498db;
+      text-decoration: underline;
+    }
+
+    .toc ol ol {
+      margin-left: 25px;
+      margin-top: 4px;
+    }
+
+    .toc ol ol li {
+      font-size: 0.92em;
+      margin-bottom: 3px;
+    }
+
+    .toc ol ol li::before {
+      content: "- ";
+      color: #95a5a6;
+    }
+
+    /* ========== 章節標題 ========== */
+    h2 {
+      font-size: 1.6em;
+      color: #2c3e50;
+      margin: 50px 0 20px;
+      padding-bottom: 10px;
+      border-bottom: 3px solid #3498db;
+      page-break-before: always;
+    }
+
+    h2:first-of-type { page-break-before: auto; }
+
+    h3 {
+      font-size: 1.25em;
+      color: #34495e;
+      margin: 35px 0 12px;
+      padding-left: 12px;
+      border-left: 4px solid #3498db;
+    }
+
+    h4 {
+      font-size: 1.05em;
+      color: #2c3e50;
+      margin: 20px 0 10px;
+      background: #f0f4f8;
+      padding: 6px 12px;
+      border-radius: 4px;
+    }
+
+    /* ========== 段落與列表 ========== */
+    p {
+      margin-bottom: 12px;
+      text-align: justify;
+    }
+
+    ul, ol {
+      margin: 10px 0 15px 25px;
+    }
+
+    li {
+      margin-bottom: 5px;
+    }
+
+    /* ========== 程式碼 ========== */
+    pre {
+      background: #1e1e2e;
+      color: #cdd6f4;
+      padding: 20px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 0.82em;
+      line-height: 1.6;
+      margin: 12px 0 20px;
+      border: 1px solid #313244;
+    }
+
+    code {
+      font-family: "Cascadia Code", "JetBrains Mono", "Fira Code", "Consolas", monospace;
+    }
+
+    p code, li code {
+      background: #f0f4f8;
+      color: #e74c3c;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 0.88em;
+    }
+
+    /* 語法高亮色 */
+    .kw { color: #cba6f7; }  /* 關鍵字 */
+    .an { color: #f9e2af; }  /* 註解 / annotation */
+    .st { color: #a6e3a1; }  /* 字串 */
+    .cm { color: #6c7086; font-style: italic; }  /* 注釋 */
+    .tp { color: #89b4fa; }  /* 型別 */
+    .fn { color: #89dceb; }  /* 函式 */
+    .nb { color: #fab387; }  /* 數字 */
+
+    /* ========== 資訊方塊 ========== */
+    .info-box {
+      background: #edf7ff;
+      border-left: 4px solid #3498db;
+      padding: 15px 20px;
+      margin: 15px 0 20px;
+      border-radius: 0 8px 8px 0;
+    }
+
+    .info-box.warning {
+      background: #fef9e7;
+      border-left-color: #f39c12;
+    }
+
+    .info-box.important {
+      background: #fdecea;
+      border-left-color: #e74c3c;
+    }
+
+    .info-box.success {
+      background: #eafaf1;
+      border-left-color: #27ae60;
+    }
+
+    .info-box strong {
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    /* ========== 流程圖 ========== */
+    .diagram {
+      background: #fafbfc;
+      border: 2px solid #e0e6ed;
+      border-radius: 8px;
+      padding: 25px;
+      margin: 20px 0;
+      overflow-x: auto;
+    }
+
+    .diagram pre {
+      background: transparent;
+      color: #2c3e50;
+      border: none;
+      padding: 0;
+      font-size: 0.8em;
+      line-height: 1.4;
+    }
+
+    /* ========== 檔案標頭 ========== */
+    .file-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 8px 8px 0 0;
+      margin-top: 25px;
+      margin-bottom: 0;
+      font-weight: bold;
+      font-size: 0.95em;
+    }
+
+    .file-header + pre {
+      margin-top: 0;
+      border-radius: 0 0 8px 8px;
+    }
+
+    /* ========== 表格 ========== */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 15px 0 20px;
+      font-size: 0.9em;
+    }
+
+    th {
+      background: #3498db;
+      color: #fff;
+      padding: 10px 15px;
+      text-align: left;
+    }
+
+    td {
+      padding: 10px 15px;
+      border-bottom: 1px solid #e0e6ed;
+    }
+
+    tr:nth-child(even) { background: #f7f9fc; }
+
+    /* ========== 列印樣式 ========== */
+    @media print {
+      body { background: #fff; }
+
+      .container {
+        box-shadow: none;
+        padding: 30px;
+        max-width: 100%;
+      }
+
+      pre {
+        background: #f5f5f5 !important;
+        color: #333 !important;
+        border: 1px solid #ddd !important;
+        font-size: 0.75em;
+      }
+
+      .kw { color: #7b1fa2; }
+      .an { color: #f57f17; }
+      .st { color: #2e7d32; }
+      .cm { color: #78909c; }
+      .tp { color: #1565c0; }
+      .fn { color: #00838f; }
+      .nb { color: #e65100; }
+
+      h2 { page-break-before: always; }
+      h2:first-of-type { page-break-before: auto; }
+
+      pre, .diagram, table { page-break-inside: avoid; }
+    }
+
+    /* ========== 步驟區塊 ========== */
+    .step {
+      display: flex;
+      gap: 15px;
+      margin: 15px 0;
+      align-items: flex-start;
+    }
+
+    .step-num {
+      background: #3498db;
+      color: #fff;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .step-content { flex: 1; }
+
+    /* ========== 分隔線 ========== */
+    hr {
+      border: none;
+      border-top: 1px solid #e0e6ed;
+      margin: 30px 0;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- ==================== 封面 ==================== -->
+  <div class="cover">
+    <h1>Spring Security + JWT<br>設計說明文件</h1>
+    <p class="subtitle">angular-learning-api 後端安全認證架構解析</p>
+    <div class="tech-stack">
+      <span>Spring Boot 3.4.1</span>
+      <span>Spring Security 6</span>
+      <span>JWT (jjwt 0.12.6)</span>
+      <span>Java 21</span>
+      <span>MyBatis</span>
+    </div>
+  </div>
+
+  <!-- ==================== 目錄 ==================== -->
+  <div class="toc">
+    <h2>目錄</h2>
+    <ol>
+      <li><a href="#ch1">JWT 基礎概念</a></li>
+      <li><a href="#ch2">整體架構流程</a></li>
+      <li><a href="#ch3">Maven 依賴說明</a></li>
+      <li><a href="#ch4">application.yml 設定說明</a></li>
+      <li><a href="#ch5">檔案逐一解說</a>
+        <ol>
+          <li><a href="#ch5-1">JwtUtil.java — JWT 工具類</a></li>
+          <li><a href="#ch5-2">SecurityConfig.java — 安全設定</a></li>
+          <li><a href="#ch5-3">CustomUserDetailsService.java — 使用者載入服務</a></li>
+          <li><a href="#ch5-4">JwtAuthenticationFilter.java — JWT 過濾器</a></li>
+          <li><a href="#ch5-5">LoginService.java — 登入業務邏輯</a></li>
+          <li><a href="#ch5-6">LoginController.java — 登入 API 控制器</a></li>
+        </ol>
+      </li>
+      <li><a href="#ch6">完整請求流程圖解</a></li>
+      <li><a href="#ch7">前端配合事項</a></li>
+    </ol>
+  </div>
+
+  <!-- ==================== 第一章：JWT 基礎概念 ==================== -->
+  <h2 id="ch1">1. JWT 基礎概念</h2>
+
+  <h3>什麼是 JWT？</h3>
+  <p>JWT（JSON Web Token）是一種開放標準（RFC 7519），用於在各方之間以 JSON 物件的形式安全地傳輸資訊。JWT 可以被簽署（使用密鑰或公私鑰對），以確保資料的完整性和來源可信性。</p>
+
+  <h3>為什麼需要 JWT？</h3>
+  <p>傳統的網頁應用使用 <strong>Session</strong> 機制來追蹤使用者登入狀態：使用者登入後，伺服器在記憶體中建立一個 Session，並把 Session ID 存入 Cookie 回傳給瀏覽器。這種方式的問題包括：</p>
+  <ul>
+    <li><strong>伺服器有狀態</strong>：Session 存在伺服器記憶體中，多台伺服器之間難以共享</li>
+    <li><strong>擴展性差</strong>：隨著使用者增加，伺服器的記憶體負擔增大</li>
+    <li><strong>跨域受限</strong>：Cookie 受同源政策限制，前後端分離時較麻煩</li>
+  </ul>
+  <p>JWT 的做法是：登入成功後，伺服器將使用者資訊編碼成一個 Token，之後每次請求前端自己攜帶這個 Token，伺服器只需驗證 Token 即可，<strong>不需要在伺服器端保存任何狀態</strong>。</p>
+
+  <h3>JWT 的結構</h3>
+  <p>JWT 由三個部分組成，用 <code>.</code> 分隔：</p>
+
+  <div class="diagram">
+<pre>
+  xxxxx.yyyyy.zzzzz
+    |       |      |
+ Header  Payload  Signature
+ (標頭)  (負載)   (簽名)
+</pre>
+  </div>
+
+  <table>
+    <tr><th>部分</th><th>內容</th><th>本專案的範例</th></tr>
+    <tr>
+      <td><strong>Header</strong></td>
+      <td>指定簽名演算法和 Token 類型</td>
+      <td><code>{"alg": "HS256", "typ": "JWT"}</code></td>
+    </tr>
+    <tr>
+      <td><strong>Payload</strong></td>
+      <td>存放實際資料（Claims），如使用者帳號、過期時間</td>
+      <td><code>{"sub": "john", "iat": 1700000000, "exp": 1700086400}</code></td>
+    </tr>
+    <tr>
+      <td><strong>Signature</strong></td>
+      <td>用 Header + Payload + 密鑰 計算出的簽名，防止篡改</td>
+      <td>HMAC-SHA256 簽名結果</td>
+    </tr>
+  </table>
+
+  <div class="info-box">
+    <strong>重點理解</strong>
+    Payload 裡的 <code>sub</code>（subject）在本專案代表使用者帳號（account），<code>iat</code> 是簽發時間，<code>exp</code> 是過期時間。JWT 內容是 <strong>Base64 編碼但非加密</strong>，任何人都可以解碼看到內容，但無法修改（因為簽名會對不上）。
+  </div>
+
+  <!-- ==================== 第二章：整體架構流程 ==================== -->
+  <h2 id="ch2">2. 整體架構流程</h2>
+
+  <h3>檔案架構總覽</h3>
+  <div class="diagram">
+<pre>
+com.example.api
+├── config/
+│   └── security/
+│       ├── SecurityConfig.java              ← 安全總設定（核心）
+│       ├── JwtAuthenticationFilter.java     ← JWT 驗證過濾器
+│       └── CustomUserDetailsService.java    ← 從 DB 載入使用者
+├── controller/
+│   └── LoginController.java                ← 登入/註冊 API 端點
+├── service/
+│   └── LoginService.java                   ← 登入業務邏輯
+├── util/
+│   └── JwtUtil.java                        ← JWT 產生/驗證工具
+└── resources/
+    └── application.yml                      ← JWT 密鑰與過期時間設定
+</pre>
+  </div>
+
+  <h3>登入流程（取得 Token）</h3>
+  <div class="diagram">
+<pre>
+  前端 (Angular)                          後端 (Spring Boot)
+  ═══════════════                         ═══════════════════
+
+  ┌──────────────┐     POST /api/user/login
+  │   登入表單    │  ─────────────────────────►  ┌──────────────────┐
+  │ account:john │     {account, password}       │ LoginController  │
+  │ password:*** │                               │   .login()       │
+  └──────────────┘                               └────────┬─────────┘
+                                                          │
+                                                          ▼
+                                                 ┌──────────────────┐
+                                                 │  LoginService    │
+                                                 │   .login()       │
+                                                 └────────┬─────────┘
+                                                          │
+                                          ┌───────────────┴───────────────┐
+                                          ▼                               │
+                                 ┌──────────────────┐                     │
+                                 │ Authentication   │                     │
+                                 │   Manager        │                     │
+                                 │ .authenticate()  │                     │
+                                 └────────┬─────────┘                     │
+                                          │                               │
+                                          ▼                               │
+                                 ┌──────────────────┐                     │
+                                 │ CustomUserDetails │                     │
+                                 │   Service         │                     │
+                                 │ .loadUserBy       │                     │
+                                 │  Username()       │                     │
+                                 └────────┬─────────┘                     │
+                                          │                               │
+                                          ▼                               │
+                                 ┌──────────────────┐                     │
+                                 │   UserMapper      │                     │
+                                 │ .findByAccount()  │                     │
+                                 │     (MySQL)       │                     │
+                                 └────────┬─────────┘                     │
+                                          │                               │
+                                          │ 驗證密碼                       │
+                                          │ (BCrypt比對)                   │
+                                          │                               │
+                                          ▼                               ▼
+                                  驗證成功？───── Yes ──►  ┌──────────────────┐
+                                     │                    │    JwtUtil       │
+                                    No                    │ .generateToken() │
+                                     │                    └────────┬─────────┘
+                                     ▼                             │
+                              拋出 GlobalException                  │
+                              "密碼錯誤"                            ▼
+                                                          回傳 JWT Token
+                                                              │
+  ┌──────────────┐     {token: "eyJhbG..."}                   │
+  │  儲存 Token   │  ◄────────────────────────────────────────┘
+  │ localStorage │
+  └──────────────┘
+</pre>
+  </div>
+
+  <h3>API 請求流程（攜帶 Token 存取受保護的 API）</h3>
+  <div class="diagram">
+<pre>
+  前端 (Angular)                               後端 (Spring Boot)
+  ═══════════════                              ═══════════════════
+
+  ┌──────────────┐    GET /api/todos
+  │   HTTP 請求   │  ─────────────────────────►  ┌────────────────────────┐
+  │  Header:     │    Authorization:             │  SecurityFilterChain   │
+  │  Bearer xxx  │    Bearer eyJhbG...           │                        │
+  └──────────────┘                               └───────────┬────────────┘
+                                                             │
+                                                             ▼
+                                                 ┌────────────────────────┐
+                                                 │ JwtAuthenticationFilter│
+                                                 │   .doFilterInternal() │
+                                                 └───────────┬────────────┘
+                                                             │
+                                               ┌─────────────┴─────────────┐
+                                               │  1. 取出 Authorization    │
+                                               │  2. 移除 "Bearer " 前綴   │
+                                               │  3. 驗證 Token 簽名+過期  │
+                                               │  4. 取出 account          │
+                                               │  5. 載入 UserDetails     │
+                                               │  6. 設定 SecurityContext  │
+                                               └─────────────┬─────────────┘
+                                                             │
+                                                   Token 有效？
+                                                    ╱         ╲
+                                                  Yes          No
+                                                  ╱              ╲
+                                                 ▼                ▼
+                                        ┌──────────────┐   回傳 401/403
+                                        │  Controller  │
+                                        │ (TodoController│
+                                        │   等)         │
+                                        └──────────────┘
+</pre>
+  </div>
+
+  <!-- ==================== 第三章：Maven 依賴 ==================== -->
+  <h2 id="ch3">3. Maven 依賴說明</h2>
+
+  <p>在 <code>pom.xml</code> 中，與 Spring Security + JWT 相關的依賴有：</p>
+
+  <div class="file-header">pom.xml（安全相關依賴節選）</div>
+<pre><code><span class="cm">&lt;!-- Spring Security：提供完整的安全框架 --&gt;</span>
+<span class="kw">&lt;dependency&gt;</span>
+  <span class="tp">&lt;groupId&gt;</span>org.springframework.boot<span class="tp">&lt;/groupId&gt;</span>
+  <span class="tp">&lt;artifactId&gt;</span>spring-boot-starter-security<span class="tp">&lt;/artifactId&gt;</span>
+<span class="kw">&lt;/dependency&gt;</span>
+
+<span class="cm">&lt;!-- JWT API：jjwt 的核心介面 --&gt;</span>
+<span class="kw">&lt;dependency&gt;</span>
+  <span class="tp">&lt;groupId&gt;</span>io.jsonwebtoken<span class="tp">&lt;/groupId&gt;</span>
+  <span class="tp">&lt;artifactId&gt;</span>jjwt-api<span class="tp">&lt;/artifactId&gt;</span>
+  <span class="tp">&lt;version&gt;</span><span class="st">0.12.6</span><span class="tp">&lt;/version&gt;</span>
+<span class="kw">&lt;/dependency&gt;</span>
+
+<span class="cm">&lt;!-- JWT 實作：執行期需要，編譯時不需要 --&gt;</span>
+<span class="kw">&lt;dependency&gt;</span>
+  <span class="tp">&lt;groupId&gt;</span>io.jsonwebtoken<span class="tp">&lt;/groupId&gt;</span>
+  <span class="tp">&lt;artifactId&gt;</span>jjwt-impl<span class="tp">&lt;/artifactId&gt;</span>
+  <span class="tp">&lt;version&gt;</span><span class="st">0.12.6</span><span class="tp">&lt;/version&gt;</span>
+  <span class="an">&lt;scope&gt;</span>runtime<span class="an">&lt;/scope&gt;</span>
+<span class="kw">&lt;/dependency&gt;</span>
+
+<span class="cm">&lt;!-- JWT Jackson：用於 JSON 序列化/反序列化 --&gt;</span>
+<span class="kw">&lt;dependency&gt;</span>
+  <span class="tp">&lt;groupId&gt;</span>io.jsonwebtoken<span class="tp">&lt;/groupId&gt;</span>
+  <span class="tp">&lt;artifactId&gt;</span>jjwt-jackson<span class="tp">&lt;/artifactId&gt;</span>
+  <span class="tp">&lt;version&gt;</span><span class="st">0.12.6</span><span class="tp">&lt;/version&gt;</span>
+  <span class="an">&lt;scope&gt;</span>runtime<span class="an">&lt;/scope&gt;</span>
+<span class="kw">&lt;/dependency&gt;</span></code></pre>
+
+  <div class="info-box">
+    <strong>為什麼 jjwt 要拆成三個依賴？</strong>
+    這是模組化設計：<code>jjwt-api</code> 提供介面定義（編譯時使用）；<code>jjwt-impl</code> 提供實作（執行時使用）；<code>jjwt-jackson</code> 負責 JSON 處理。這樣做可以在不改動程式碼的情況下替換底層實作。
+  </div>
+
+  <!-- ==================== 第四章：application.yml ==================== -->
+  <h2 id="ch4">4. application.yml 設定說明</h2>
+
+  <p>JWT 相關的設定寫在 <code>application.yml</code> 中：</p>
+
+  <div class="file-header">src/main/resources/application.yml（JWT 設定段落）</div>
+<pre><code><span class="cm"># JWT 設定</span>
+<span class="tp">jwt:</span>
+  <span class="tp">secret:</span> <span class="st">SaDhMmXkzKSBOSTvznXq3NEUbyWTJKrJUEue7hu3pn4=</span>
+  <span class="tp">expiration:</span> <span class="nb">86400000</span>  <span class="cm"># Token 有效期 24 小時（毫秒）</span></code></pre>
+
+  <table>
+    <tr><th>設定項</th><th>值</th><th>說明</th></tr>
+    <tr>
+      <td><code>jwt.secret</code></td>
+      <td><code>SaDhMmXk...pn4=</code></td>
+      <td>Base64 編碼的 HMAC-SHA256 密鑰。<strong>用來簽署和驗證 JWT</strong>。此密鑰必須保密，洩漏後任何人都可以偽造 Token。</td>
+    </tr>
+    <tr>
+      <td><code>jwt.expiration</code></td>
+      <td><code>86400000</code></td>
+      <td>Token 的有效期，單位為毫秒。86400000 ms = 24 小時。過期後 Token 自動失效，使用者需要重新登入。</td>
+    </tr>
+  </table>
+
+  <div class="info-box warning">
+    <strong>安全提醒</strong>
+    在正式環境中，<code>jwt.secret</code> 不應直接寫死在 YAML 檔裡，而應透過環境變數或設定中心注入，例如：<code>secret: ${JWT_SECRET}</code>。這是因為原始碼可能被推到公開的 Git 儲存庫，導致密鑰洩漏。
+  </div>
+
+  <!-- ==================== 第五章：檔案逐一解說 ==================== -->
+  <h2 id="ch5">5. 檔案逐一解說</h2>
+
+  <!-- ===== 5-1 JwtUtil ===== -->
+  <h3 id="ch5-1">5.1 JwtUtil.java — JWT 工具類</h3>
+
+  <p><strong>路徑：</strong><code>src/main/java/com/example/api/util/JwtUtil.java</code></p>
+  <p><strong>職責：</strong>負責 JWT Token 的「產生」、「解析」、「驗證」三大功能。是整個 JWT 機制的核心工具。</p>
+
+  <div class="file-header">JwtUtil.java 完整程式碼</div>
+<pre><code><span class="kw">package</span> com.example.api.util;
+
+<span class="kw">import</span> io.jsonwebtoken.Claims;
+<span class="kw">import</span> io.jsonwebtoken.Jwts;
+<span class="kw">import</span> io.jsonwebtoken.security.Keys;
+<span class="kw">import</span> java.util.Base64;
+<span class="kw">import</span> java.util.Date;
+<span class="kw">import</span> javax.crypto.SecretKey;
+<span class="kw">import</span> org.springframework.beans.factory.annotation.Value;
+<span class="kw">import</span> org.springframework.stereotype.Component;
+
+<span class="an">@Component</span>
+<span class="kw">public class</span> <span class="tp">JwtUtil</span> {
+
+  <span class="kw">private final</span> <span class="tp">SecretKey</span> secretKey;
+  <span class="kw">private final</span> <span class="kw">long</span> expiration;
+
+  <span class="kw">public</span> <span class="fn">JwtUtil</span>(<span class="an">@Value("${jwt.secret}")</span> <span class="tp">String</span> secret,
+      <span class="an">@Value("${jwt.expiration}")</span> <span class="kw">long</span> expiration) {
+    <span class="kw">this</span>.secretKey = Keys.<span class="fn">hmacShaKeyFor</span>(Base64.<span class="fn">getDecoder</span>().<span class="fn">decode</span>(secret));
+    <span class="kw">this</span>.expiration = expiration;
+  }
+
+  <span class="cm">/**
+   * 根據帳號產生 JWT Token
+   */</span>
+  <span class="kw">public</span> <span class="tp">String</span> <span class="fn">generateToken</span>(<span class="tp">String</span> account) {
+    <span class="kw">return</span> Jwts.<span class="fn">builder</span>()
+        .<span class="fn">subject</span>(account)
+        .<span class="fn">issuedAt</span>(<span class="kw">new</span> <span class="tp">Date</span>())
+        .<span class="fn">expiration</span>(<span class="kw">new</span> <span class="tp">Date</span>(System.<span class="fn">currentTimeMillis</span>() + expiration))
+        .<span class="fn">signWith</span>(secretKey)
+        .<span class="fn">compact</span>();
+  }
+
+  <span class="cm">/**
+   * 從 Token 中取出帳號
+   */</span>
+  <span class="kw">public</span> <span class="tp">String</span> <span class="fn">extractAccount</span>(<span class="tp">String</span> token) {
+    <span class="kw">return</span> <span class="fn">extractClaims</span>(token).<span class="fn">getSubject</span>();
+  }
+
+  <span class="cm">/**
+   * 驗證 Token 是否有效（未過期、簽名正確）
+   */</span>
+  <span class="kw">public boolean</span> <span class="fn">isTokenValid</span>(<span class="tp">String</span> token) {
+    <span class="kw">try</span> {
+      <span class="tp">Claims</span> claims = <span class="fn">extractClaims</span>(token);
+      <span class="kw">return</span> !claims.<span class="fn">getExpiration</span>().<span class="fn">before</span>(<span class="kw">new</span> <span class="tp">Date</span>());
+    } <span class="kw">catch</span> (<span class="tp">Exception</span> e) {
+      <span class="kw">return false</span>;
+    }
+  }
+
+  <span class="kw">private</span> <span class="tp">Claims</span> <span class="fn">extractClaims</span>(<span class="tp">String</span> token) {
+    <span class="kw">return</span> Jwts.<span class="fn">parser</span>()
+        .<span class="fn">verifyWith</span>(secretKey)
+        .<span class="fn">build</span>()
+        .<span class="fn">parseSignedClaims</span>(token)
+        .<span class="fn">getPayload</span>();
+  }
+}</code></pre>
+
+  <h4>方法說明</h4>
+  <table>
+    <tr><th>方法</th><th>功能</th><th>詳細說明</th></tr>
+    <tr>
+      <td><code>JwtUtil(secret, expiration)</code></td>
+      <td>建構子</td>
+      <td>透過 <code>@Value</code> 注入 <code>application.yml</code> 中的 <code>jwt.secret</code> 和 <code>jwt.expiration</code>。將 Base64 編碼的字串解碼後轉為 <code>SecretKey</code> 物件，供後續簽名使用。</td>
+    </tr>
+    <tr>
+      <td><code>generateToken(account)</code></td>
+      <td>產生 Token</td>
+      <td>使用 jjwt 的 Builder 模式建立 JWT。將使用者帳號放入 <code>subject</code> 欄位，設定簽發時間 <code>issuedAt</code> 和過期時間 <code>expiration</code>，最後用密鑰簽名並壓縮成字串。</td>
+    </tr>
+    <tr>
+      <td><code>extractAccount(token)</code></td>
+      <td>取出帳號</td>
+      <td>解析 Token 的 Payload，取出 <code>subject</code> 欄位（即使用者帳號）。</td>
+    </tr>
+    <tr>
+      <td><code>isTokenValid(token)</code></td>
+      <td>驗證 Token</td>
+      <td>嘗試解析 Token 並檢查是否過期。如果 Token 被篡改、簽名無效或已過期，都會回傳 <code>false</code>。用 try-catch 包住是因為 jjwt 在解析失敗時會拋例外。</td>
+    </tr>
+    <tr>
+      <td><code>extractClaims(token)</code></td>
+      <td>解析 Claims</td>
+      <td>（私有方法）使用密鑰驗證簽名並解析出 <code>Claims</code> 物件。<code>Claims</code> 就是 JWT Payload 中的所有欄位（sub、iat、exp 等）。</td>
+    </tr>
+  </table>
+
+  <div class="info-box">
+    <strong>@Component 的作用</strong>
+    加上 <code>@Component</code> 讓 Spring 自動建立這個類別的實例（Bean），其他類別可以透過建構子注入的方式直接使用它，不需要自己 <code>new JwtUtil()</code>。
+  </div>
+
+  <!-- ===== 5-2 SecurityConfig ===== -->
+  <h3 id="ch5-2">5.2 SecurityConfig.java — 安全總設定</h3>
+
+  <p><strong>路徑：</strong><code>src/main/java/com/example/api/config/security/SecurityConfig.java</code></p>
+  <p><strong>職責：</strong>Spring Security 的核心設定檔。決定哪些 API 需要認證、哪些開放、CORS 規則、Session 策略等。可以說是整個安全機制的「指揮中心」。</p>
+
+  <div class="file-header">SecurityConfig.java 完整程式碼</div>
+<pre><code><span class="kw">package</span> com.example.api.config.security;
+
+<span class="kw">import</span> java.util.List;
+<span class="kw">import</span> org.springframework.context.annotation.Bean;
+<span class="kw">import</span> org.springframework.context.annotation.Configuration;
+<span class="kw">import</span> org.springframework.security.authentication.AuthenticationManager;
+<span class="kw">import</span> org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+<span class="kw">import</span> org.springframework.security.config.annotation.web.builders.HttpSecurity;
+<span class="kw">import</span> org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+<span class="kw">import</span> org.springframework.security.config.http.SessionCreationPolicy;
+<span class="kw">import</span> org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+<span class="kw">import</span> org.springframework.security.crypto.password.PasswordEncoder;
+<span class="kw">import</span> org.springframework.security.web.SecurityFilterChain;
+<span class="kw">import</span> org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+<span class="kw">import</span> org.springframework.web.cors.CorsConfiguration;
+<span class="kw">import</span> org.springframework.web.cors.CorsConfigurationSource;
+<span class="kw">import</span> org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+<span class="an">@Configuration</span>
+<span class="an">@EnableWebSecurity</span>
+<span class="kw">public class</span> <span class="tp">SecurityConfig</span> {
+
+  <span class="kw">private final</span> <span class="tp">JwtAuthenticationFilter</span> jwtAuthenticationFilter;
+
+  <span class="kw">public</span> <span class="fn">SecurityConfig</span>(<span class="tp">JwtAuthenticationFilter</span> jwtAuthenticationFilter) {
+    <span class="kw">this</span>.jwtAuthenticationFilter = jwtAuthenticationFilter;
+  }
+
+  <span class="an">@Bean</span>
+  <span class="kw">public</span> <span class="tp">SecurityFilterChain</span> <span class="fn">securityFilterChain</span>(<span class="tp">HttpSecurity</span> http) <span class="kw">throws</span> <span class="tp">Exception</span> {
+    http
+        .<span class="fn">cors</span>(cors -> cors.<span class="fn">configurationSource</span>(<span class="fn">corsConfigurationSource</span>()))
+        .<span class="fn">csrf</span>(csrf -> csrf.<span class="fn">disable</span>())
+        .<span class="fn">sessionManagement</span>(
+            session -> session.<span class="fn">sessionCreationPolicy</span>(SessionCreationPolicy.<span class="st">STATELESS</span>))
+        .<span class="fn">authorizeHttpRequests</span>(auth -> auth
+            .<span class="fn">requestMatchers</span>(<span class="st">"/api/user/login"</span>, <span class="st">"/api/user/create"</span>, <span class="st">"/api/user/checkEmail"</span>)
+            .<span class="fn">permitAll</span>()
+            .<span class="fn">requestMatchers</span>(<span class="st">"/api/todos/**"</span>).<span class="fn">authenticated</span>()
+            .<span class="fn">anyRequest</span>().<span class="fn">authenticated</span>()
+        )
+        .<span class="fn">addFilterBefore</span>(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.<span class="kw">class</span>);
+
+    <span class="kw">return</span> http.<span class="fn">build</span>();
+  }
+
+  <span class="an">@Bean</span>
+  <span class="kw">public</span> <span class="tp">CorsConfigurationSource</span> <span class="fn">corsConfigurationSource</span>() {
+    <span class="tp">CorsConfiguration</span> config = <span class="kw">new</span> <span class="tp">CorsConfiguration</span>();
+    config.<span class="fn">setAllowedOrigins</span>(List.<span class="fn">of</span>(<span class="st">"http://localhost:4200"</span>, <span class="st">"http://127.0.0.1:4200"</span>));
+    config.<span class="fn">setAllowedMethods</span>(List.<span class="fn">of</span>(<span class="st">"GET"</span>, <span class="st">"POST"</span>, <span class="st">"PUT"</span>, <span class="st">"DELETE"</span>, <span class="st">"PATCH"</span>, <span class="st">"OPTIONS"</span>));
+    config.<span class="fn">setAllowedHeaders</span>(List.<span class="fn">of</span>(<span class="st">"*"</span>));
+    config.<span class="fn">setAllowCredentials</span>(<span class="kw">true</span>);
+
+    <span class="tp">UrlBasedCorsConfigurationSource</span> source = <span class="kw">new</span> <span class="tp">UrlBasedCorsConfigurationSource</span>();
+    source.<span class="fn">registerCorsConfiguration</span>(<span class="st">"/api/**"</span>, config);
+    <span class="kw">return</span> source;
+  }
+
+  <span class="an">@Bean</span>
+  <span class="kw">public</span> <span class="tp">AuthenticationManager</span> <span class="fn">authenticationManager</span>(<span class="tp">AuthenticationConfiguration</span> config)
+      <span class="kw">throws</span> <span class="tp">Exception</span> {
+    <span class="kw">return</span> config.<span class="fn">getAuthenticationManager</span>();
+  }
+
+  <span class="an">@Bean</span>
+  <span class="kw">public</span> <span class="tp">PasswordEncoder</span> <span class="fn">passwordEncoder</span>() {
+    <span class="kw">return new</span> <span class="tp">BCryptPasswordEncoder</span>(<span class="nb">12</span>);
+  }
+}</code></pre>
+
+  <h4>方法說明</h4>
+  <table>
+    <tr><th>方法</th><th>功能</th><th>詳細說明</th></tr>
+    <tr>
+      <td><code>securityFilterChain(http)</code></td>
+      <td>定義安全過濾鏈</td>
+      <td>
+        這是整個安全設定的核心。逐行解說：<br>
+        <strong>1. <code>.cors()</code></strong>：啟用 CORS 並指定設定來源<br>
+        <strong>2. <code>.csrf().disable()</code></strong>：關閉 CSRF 防護。因為我們用 JWT（不用 Cookie），所以不需要 CSRF<br>
+        <strong>3. <code>.sessionManagement(STATELESS)</code></strong>：告訴 Spring 不要建立 HttpSession。因為 JWT 是無狀態的，每次請求都自帶認證資訊<br>
+        <strong>4. <code>.authorizeHttpRequests()</code></strong>：定義 URL 權限規則。<code>permitAll()</code> 表示不需要認證就能存取，<code>authenticated()</code> 表示必須帶有效 Token<br>
+        <strong>5. <code>.addFilterBefore()</code></strong>：將自訂的 JWT 過濾器插入到 Spring Security 預設的帳密過濾器之前
+      </td>
+    </tr>
+    <tr>
+      <td><code>corsConfigurationSource()</code></td>
+      <td>CORS 設定</td>
+      <td>允許來自 Angular 開發伺服器（localhost:4200）的跨域請求。設定允許的 HTTP 方法、Header，並啟用 Credentials（允許攜帶認證資訊）。</td>
+    </tr>
+    <tr>
+      <td><code>authenticationManager(config)</code></td>
+      <td>暴露認證管理器</td>
+      <td>將 Spring Security 的 <code>AuthenticationManager</code> 註冊為 Bean，讓 <code>LoginService</code> 可以注入並使用它來執行帳密驗證。</td>
+    </tr>
+    <tr>
+      <td><code>passwordEncoder()</code></td>
+      <td>密碼編碼器</td>
+      <td>註冊 BCrypt 密碼編碼器（強度 12）。Spring Security 在驗證密碼時會自動使用這個編碼器來比對使用者輸入的明文密碼和資料庫中的雜湊值。</td>
+    </tr>
+  </table>
+
+  <div class="info-box">
+    <strong>URL 權限規則說明</strong>
+    <ul>
+      <li><code>/api/user/login</code>：登入 — 任何人都能存取（還沒登入怎麼要求 Token？）</li>
+      <li><code>/api/user/create</code>：註冊 — 任何人都能存取</li>
+      <li><code>/api/user/checkEmail</code>：檢查 Email 是否重複 — 給註冊表單用，不需要認證</li>
+      <li><code>/api/todos/**</code>：Todo 相關 API — 必須登入才能存取</li>
+      <li><code>anyRequest()</code>：其他所有請求 — 必須登入</li>
+    </ul>
+  </div>
+
+  <div class="info-box warning">
+    <strong>為什麼要關閉 CSRF？</strong>
+    CSRF（Cross-Site Request Forgery）防護是用來防止「惡意網站用你的瀏覽器偷偷發請求」的機制，它依賴 Cookie。但我們的 JWT 是放在 <code>Authorization</code> Header 中，不是放在 Cookie 裡，所以惡意網站無法自動攜帶，因此不需要 CSRF 保護。
+  </div>
+
+  <!-- ===== 5-3 CustomUserDetailsService ===== -->
+  <h3 id="ch5-3">5.3 CustomUserDetailsService.java — 使用者載入服務</h3>
+
+  <p><strong>路徑：</strong><code>src/main/java/com/example/api/config/security/CustomUserDetailsService.java</code></p>
+  <p><strong>職責：</strong>實作 Spring Security 的 <code>UserDetailsService</code> 介面，告訴 Spring Security 如何從資料庫載入使用者資訊。這是 Spring Security 與你的資料庫之間的「橋樑」。</p>
+
+  <div class="file-header">CustomUserDetailsService.java 完整程式碼</div>
+<pre><code><span class="kw">package</span> com.example.api.config.security;
+
+<span class="kw">import</span> com.example.api.generate.po.UserEntity;
+<span class="kw">import</span> com.example.api.mappers.UserMapper;
+<span class="kw">import</span> java.util.Collections;
+<span class="kw">import</span> org.springframework.security.core.userdetails.User;
+<span class="kw">import</span> org.springframework.security.core.userdetails.UserDetails;
+<span class="kw">import</span> org.springframework.security.core.userdetails.UserDetailsService;
+<span class="kw">import</span> org.springframework.security.core.userdetails.UsernameNotFoundException;
+<span class="kw">import</span> org.springframework.stereotype.Service;
+
+<span class="an">@Service</span>
+<span class="kw">public class</span> <span class="tp">CustomUserDetailsService</span> <span class="kw">implements</span> <span class="tp">UserDetailsService</span> {
+
+  <span class="kw">private final</span> <span class="tp">UserMapper</span> userMapper;
+
+  <span class="kw">public</span> <span class="fn">CustomUserDetailsService</span>(<span class="tp">UserMapper</span> userMapper) {
+    <span class="kw">this</span>.userMapper = userMapper;
+  }
+
+  <span class="an">@Override</span>
+  <span class="kw">public</span> <span class="tp">UserDetails</span> <span class="fn">loadUserByUsername</span>(<span class="tp">String</span> account) <span class="kw">throws</span> <span class="tp">UsernameNotFoundException</span> {
+    <span class="tp">UserEntity</span> entity = userMapper.<span class="fn">findByAccount</span>(account);
+    <span class="kw">if</span> (entity == <span class="kw">null</span>) {
+      <span class="kw">throw new</span> <span class="tp">UsernameNotFoundException</span>(<span class="st">"帳號不存在: "</span> + account);
+    }
+    <span class="kw">return new</span> <span class="tp">User</span>(entity.<span class="fn">getAccount</span>(), entity.<span class="fn">getPassword</span>(), Collections.<span class="fn">emptyList</span>());
+  }
+}</code></pre>
+
+  <h4>方法說明</h4>
+  <table>
+    <tr><th>方法</th><th>功能</th><th>詳細說明</th></tr>
+    <tr>
+      <td><code>CustomUserDetailsService(userMapper)</code></td>
+      <td>建構子</td>
+      <td>注入 MyBatis 的 <code>UserMapper</code>，用來查詢資料庫中的使用者資料。</td>
+    </tr>
+    <tr>
+      <td><code>loadUserByUsername(account)</code></td>
+      <td>載入使用者</td>
+      <td>
+        Spring Security 在驗證帳密時會呼叫此方法。流程：<br>
+        1. 使用 <code>userMapper.findByAccount()</code> 從 MySQL 查詢使用者<br>
+        2. 如果找不到，拋出 <code>UsernameNotFoundException</code><br>
+        3. 找到後，將資料庫的 <code>UserEntity</code> 轉換成 Spring Security 認識的 <code>UserDetails</code> 物件<br>
+        4. <code>Collections.emptyList()</code> 表示這個使用者沒有特殊角色/權限（本專案未實作角色系統）
+      </td>
+    </tr>
+  </table>
+
+  <div class="info-box">
+    <strong>UserDetails 是什麼？</strong>
+    <code>UserDetails</code> 是 Spring Security 定義的介面，代表一個「使用者」。Spring Security 內建的 <code>User</code> 類別實作了這個介面。我們要做的就是把資料庫中的資料「翻譯」成這個格式，讓 Spring Security 能夠理解。
+  </div>
+
+  <div class="info-box success">
+    <strong>設計考量</strong>
+    為什麼不直接讓 <code>UserEntity</code> 實作 <code>UserDetails</code>？因為 <code>UserEntity</code> 是 MyBatis Generator 產生的類別，修改它可能在重新產生時被覆蓋。用一個獨立的 Service 做轉換更安全。
+  </div>
+
+  <!-- ===== 5-4 JwtAuthenticationFilter ===== -->
+  <h3 id="ch5-4">5.4 JwtAuthenticationFilter.java — JWT 驗證過濾器</h3>
+
+  <p><strong>路徑：</strong><code>src/main/java/com/example/api/config/security/JwtAuthenticationFilter.java</code></p>
+  <p><strong>職責：</strong>在每個 HTTP 請求到達 Controller 之前，檢查 <code>Authorization</code> Header 中是否包含有效的 JWT Token。如果有效，就將使用者的認證資訊寫入 Spring Security 的 SecurityContext。這是 JWT 認證的「守門員」。</p>
+
+  <div class="file-header">JwtAuthenticationFilter.java 完整程式碼</div>
+<pre><code><span class="kw">package</span> com.example.api.config.security;
+
+<span class="kw">import</span> com.example.api.util.JwtUtil;
+<span class="kw">import</span> jakarta.servlet.FilterChain;
+<span class="kw">import</span> jakarta.servlet.ServletException;
+<span class="kw">import</span> jakarta.servlet.http.HttpServletRequest;
+<span class="kw">import</span> jakarta.servlet.http.HttpServletResponse;
+<span class="kw">import</span> java.io.IOException;
+<span class="kw">import</span> org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+<span class="kw">import</span> org.springframework.security.core.context.SecurityContextHolder;
+<span class="kw">import</span> org.springframework.security.core.userdetails.UserDetails;
+<span class="kw">import</span> org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+<span class="kw">import</span> org.springframework.stereotype.Component;
+<span class="kw">import</span> org.springframework.web.filter.OncePerRequestFilter;
+
+<span class="an">@Component</span>
+<span class="kw">public class</span> <span class="tp">JwtAuthenticationFilter</span> <span class="kw">extends</span> <span class="tp">OncePerRequestFilter</span> {
+
+  <span class="kw">private final</span> <span class="tp">JwtUtil</span> jwtUtil;
+  <span class="kw">private final</span> <span class="tp">CustomUserDetailsService</span> userDetailsService;
+
+  <span class="kw">public</span> <span class="fn">JwtAuthenticationFilter</span>(<span class="tp">JwtUtil</span> jwtUtil, <span class="tp">CustomUserDetailsService</span> userDetailsService) {
+    <span class="kw">this</span>.jwtUtil = jwtUtil;
+    <span class="kw">this</span>.userDetailsService = userDetailsService;
+  }
+
+  <span class="an">@Override</span>
+  <span class="kw">protected void</span> <span class="fn">doFilterInternal</span>(<span class="tp">HttpServletRequest</span> request, <span class="tp">HttpServletResponse</span> response,
+      <span class="tp">FilterChain</span> filterChain) <span class="kw">throws</span> <span class="tp">ServletException</span>, <span class="tp">IOException</span> {
+
+    <span class="tp">String</span> authHeader = request.<span class="fn">getHeader</span>(<span class="st">"Authorization"</span>);
+
+    <span class="kw">if</span> (authHeader == <span class="kw">null</span> || !authHeader.<span class="fn">startsWith</span>(<span class="st">"Bearer "</span>)) {
+      filterChain.<span class="fn">doFilter</span>(request, response);
+      <span class="kw">return</span>;
+    }
+
+    <span class="tp">String</span> token = authHeader.<span class="fn">substring</span>(<span class="nb">7</span>);
+
+    <span class="kw">if</span> (jwtUtil.<span class="fn">isTokenValid</span>(token)) {
+      <span class="tp">String</span> account = jwtUtil.<span class="fn">extractAccount</span>(token);
+
+      <span class="kw">if</span> (SecurityContextHolder.<span class="fn">getContext</span>().<span class="fn">getAuthentication</span>() == <span class="kw">null</span>) {
+        <span class="tp">UserDetails</span> userDetails = userDetailsService.<span class="fn">loadUserByUsername</span>(account);
+        <span class="tp">UsernamePasswordAuthenticationToken</span> authToken =
+            <span class="kw">new</span> <span class="tp">UsernamePasswordAuthenticationToken</span>(userDetails, <span class="kw">null</span>,
+                userDetails.<span class="fn">getAuthorities</span>());
+        authToken.<span class="fn">setDetails</span>(<span class="kw">new</span> <span class="tp">WebAuthenticationDetailsSource</span>().<span class="fn">buildDetails</span>(request));
+        SecurityContextHolder.<span class="fn">getContext</span>().<span class="fn">setAuthentication</span>(authToken);
+      }
+    }
+
+    filterChain.<span class="fn">doFilter</span>(request, response);
+  }
+}</code></pre>
+
+  <h4>方法說明</h4>
+  <table>
+    <tr><th>方法</th><th>功能</th><th>詳細說明</th></tr>
+    <tr>
+      <td><code>JwtAuthenticationFilter(jwtUtil, userDetailsService)</code></td>
+      <td>建構子</td>
+      <td>注入 JWT 工具類和使用者載入服務。</td>
+    </tr>
+    <tr>
+      <td><code>doFilterInternal(request, response, filterChain)</code></td>
+      <td>過濾每個 HTTP 請求</td>
+      <td>
+        這是核心方法，每個請求都會經過。執行步驟：<br><br>
+        <strong>Step 1</strong>：從 HTTP Header 取出 <code>Authorization</code> 的值<br>
+        <strong>Step 2</strong>：檢查是否以 <code>Bearer </code> 開頭。如果不是（例如公開 API），直接放行<br>
+        <strong>Step 3</strong>：用 <code>substring(7)</code> 去掉 <code>"Bearer "</code>（7 個字元）取得純 Token<br>
+        <strong>Step 4</strong>：用 <code>jwtUtil.isTokenValid()</code> 驗證 Token<br>
+        <strong>Step 5</strong>：從 Token 取出帳號，再從資料庫載入使用者資訊<br>
+        <strong>Step 6</strong>：建立 <code>Authentication</code> 物件並放入 <code>SecurityContext</code><br>
+        <strong>Step 7</strong>：呼叫 <code>filterChain.doFilter()</code> 繼續後續的處理流程
+      </td>
+    </tr>
+  </table>
+
+  <div class="info-box">
+    <strong>OncePerRequestFilter 是什麼？</strong>
+    它是 Spring 提供的抽象類別，確保過濾器在每個請求中只執行一次（有些情況下，例如請求轉發，過濾器可能被呼叫多次）。繼承它只需要實作 <code>doFilterInternal</code> 方法。
+  </div>
+
+  <div class="info-box">
+    <strong>SecurityContext 的作用</strong>
+    <code>SecurityContextHolder.getContext().setAuthentication(...)</code> 這行是關鍵。它告訴 Spring Security：「這個請求的使用者已經通過驗證了」。之後 <code>authorizeHttpRequests</code> 中的 <code>.authenticated()</code> 檢查就能通過。
+  </div>
+
+  <div class="info-box warning">
+    <strong>為什麼要檢查 getAuthentication() == null？</strong>
+    避免重複設定。如果 SecurityContext 中已經有認證資訊，就不需要再次載入使用者和設定，這是一個小優化。
+  </div>
+
+  <!-- ===== 5-5 LoginService ===== -->
+  <h3 id="ch5-5">5.5 LoginService.java — 登入業務邏輯</h3>
+
+  <p><strong>路徑：</strong><code>src/main/java/com/example/api/service/LoginService.java</code></p>
+  <p><strong>職責：</strong>處理登入的業務邏輯。使用 Spring Security 的 <code>AuthenticationManager</code> 進行帳密驗證，驗證成功後用 <code>JwtUtil</code> 產生 Token。</p>
+
+  <div class="file-header">LoginService.java 完整程式碼</div>
+<pre><code><span class="kw">package</span> com.example.api.service;
+
+<span class="kw">import</span> com.example.api.config.exception.GlobalException;
+<span class="kw">import</span> com.example.api.config.exception.ResponseStatus;
+<span class="kw">import</span> com.example.api.dto.UserDto;
+<span class="kw">import</span> com.example.api.util.JwtUtil;
+<span class="kw">import</span> org.springframework.security.authentication.AuthenticationManager;
+<span class="kw">import</span> org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+<span class="kw">import</span> org.springframework.security.core.AuthenticationException;
+<span class="kw">import</span> org.springframework.stereotype.Service;
+
+<span class="an">@Service</span>
+<span class="kw">public class</span> <span class="tp">LoginService</span> {
+
+  <span class="kw">private final</span> <span class="tp">AuthenticationManager</span> authenticationManager;
+  <span class="kw">private final</span> <span class="tp">JwtUtil</span> jwtUtil;
+
+  <span class="kw">public</span> <span class="fn">LoginService</span>(<span class="tp">AuthenticationManager</span> authenticationManager, <span class="tp">JwtUtil</span> jwtUtil) {
+    <span class="kw">this</span>.authenticationManager = authenticationManager;
+    <span class="kw">this</span>.jwtUtil = jwtUtil;
+  }
+
+  <span class="kw">public</span> <span class="tp">String</span> <span class="fn">login</span>(<span class="tp">UserDto</span> user) {
+    <span class="kw">try</span> {
+      authenticationManager.<span class="fn">authenticate</span>(
+          <span class="kw">new</span> <span class="tp">UsernamePasswordAuthenticationToken</span>(user.<span class="fn">getAccount</span>(), user.<span class="fn">getPassword</span>()));
+    } <span class="kw">catch</span> (<span class="tp">AuthenticationException</span> e) {
+      <span class="kw">throw new</span> <span class="tp">GlobalException</span>(ResponseStatus.<span class="st">PASSWORD_ERROR</span>.<span class="fn">getMessage</span>());
+    }
+
+    <span class="kw">return</span> jwtUtil.<span class="fn">generateToken</span>(user.<span class="fn">getAccount</span>());
+  }
+}</code></pre>
+
+  <h4>方法說明</h4>
+  <table>
+    <tr><th>方法</th><th>功能</th><th>詳細說明</th></tr>
+    <tr>
+      <td><code>LoginService(authenticationManager, jwtUtil)</code></td>
+      <td>建構子</td>
+      <td>注入 <code>AuthenticationManager</code>（來自 SecurityConfig 的 Bean）和 <code>JwtUtil</code>。</td>
+    </tr>
+    <tr>
+      <td><code>login(user)</code></td>
+      <td>執行登入</td>
+      <td>
+        <strong>Step 1</strong>：呼叫 <code>authenticationManager.authenticate()</code>，傳入帳號和密碼。Spring Security 會自動做以下事情：<br>
+        &nbsp;&nbsp;a. 呼叫 <code>CustomUserDetailsService.loadUserByUsername()</code> 從 DB 查詢使用者<br>
+        &nbsp;&nbsp;b. 用 <code>PasswordEncoder</code>（BCrypt）比對密碼<br>
+        &nbsp;&nbsp;c. 如果帳號不存在或密碼錯誤，拋出 <code>AuthenticationException</code><br><br>
+        <strong>Step 2</strong>：如果驗證失敗，捕捉例外並轉成自訂的 <code>GlobalException</code>，回傳「密碼錯誤」訊息<br><br>
+        <strong>Step 3</strong>：如果驗證成功，呼叫 <code>jwtUtil.generateToken()</code> 產生 JWT Token 並回傳
+      </td>
+    </tr>
+  </table>
+
+  <div class="info-box">
+    <strong>AuthenticationManager 背後的魔法</strong>
+    當你呼叫 <code>authenticationManager.authenticate()</code> 時，Spring Security 會：
+    <ol>
+      <li>找到已註冊的 <code>UserDetailsService</code>（也就是我們的 <code>CustomUserDetailsService</code>）</li>
+      <li>呼叫其 <code>loadUserByUsername()</code> 取得使用者資料</li>
+      <li>找到已註冊的 <code>PasswordEncoder</code>（也就是我們在 SecurityConfig 中定義的 BCrypt）</li>
+      <li>用 <code>PasswordEncoder.matches()</code> 比對明文密碼和資料庫中的雜湊值</li>
+    </ol>
+    你不需要手動查詢資料庫或比對密碼，Spring Security 全部幫你做好了！
+  </div>
+
+  <!-- ===== 5-6 LoginController ===== -->
+  <h3 id="ch5-6">5.6 LoginController.java — 登入 API 控制器</h3>
+
+  <p><strong>路徑：</strong><code>src/main/java/com/example/api/controller/LoginController.java</code></p>
+  <p><strong>職責：</strong>定義登入、註冊和信箱檢查的 REST API 端點。接收前端請求，呼叫 Service 處理，回傳統一格式的回應。</p>
+
+  <div class="file-header">LoginController.java 完整程式碼</div>
+<pre><code><span class="kw">package</span> com.example.api.controller;
+
+<span class="kw">import</span> com.example.api.dto.UserDto;
+<span class="kw">import</span> com.example.api.model.ApiResponse;
+<span class="kw">import</span> com.example.api.service.LoginService;
+<span class="kw">import</span> com.example.api.service.RegisterService;
+<span class="kw">import</span> java.util.HashMap;
+<span class="kw">import</span> java.util.Map;
+<span class="kw">import</span> org.springframework.beans.factory.annotation.Autowired;
+<span class="kw">import</span> org.springframework.http.ResponseEntity;
+<span class="kw">import</span> org.springframework.web.bind.annotation.*;
+
+<span class="an">@RestController</span>
+<span class="an">@RequestMapping("/api/user")</span>
+<span class="kw">public class</span> <span class="tp">LoginController</span> {
+
+  <span class="an">@Autowired</span>
+  <span class="kw">private</span> <span class="tp">LoginService</span> loginService;
+
+  <span class="an">@Autowired</span>
+  <span class="kw">private</span> <span class="tp">RegisterService</span> registerService;
+
+  <span class="cm">/**
+   * 登入帳號，驗證成功後回傳 JWT Token
+   */</span>
+  <span class="an">@PostMapping("/login")</span>
+  <span class="kw">public</span> <span class="tp">ResponseEntity&lt;?&gt;</span> <span class="fn">login</span>(<span class="an">@RequestBody</span> <span class="tp">UserDto</span> req) {
+    <span class="tp">String</span> token = loginService.<span class="fn">login</span>(req);
+    <span class="tp">Map&lt;String, String&gt;</span> data = <span class="kw">new</span> <span class="tp">HashMap&lt;&gt;</span>();
+    data.<span class="fn">put</span>(<span class="st">"token"</span>, token);
+    <span class="kw">return</span> ResponseEntity.<span class="fn">ok</span>(ApiResponse.<span class="fn">success</span>(<span class="st">"登入成功"</span>, data));
+  }
+
+  <span class="cm">/**
+   * 註冊帳號
+   */</span>
+  <span class="an">@PostMapping("/create")</span>
+  <span class="kw">public void</span> <span class="fn">create</span>(<span class="an">@RequestBody</span> <span class="tp">UserDto</span> req) {
+    registerService.<span class="fn">create</span>(req);
+  }
+
+  <span class="cm">/**
+   * 提供Angular asyncValidators驗證API：檢查mail是否重複
+   */</span>
+  <span class="an">@GetMapping("/checkEmail")</span>
+  <span class="kw">public</span> <span class="tp">ResponseEntity&lt;?&gt;</span> <span class="fn">checkEmail</span>(<span class="an">@RequestParam</span> <span class="tp">String</span> email) {
+    <span class="tp">Map&lt;String, Object&gt;</span> response = <span class="kw">new</span> <span class="tp">HashMap&lt;&gt;</span>();
+    <span class="kw">if</span> (registerService.<span class="fn">checkEmail</span>(email)) {
+      response.<span class="fn">put</span>(<span class="st">"exists"</span>, <span class="kw">true</span>);
+    }
+    <span class="kw">return</span> ResponseEntity.<span class="fn">ok</span>(response);
+  }
+}</code></pre>
+
+  <h4>方法說明</h4>
+  <table>
+    <tr><th>方法</th><th>HTTP</th><th>URL</th><th>說明</th></tr>
+    <tr>
+      <td><code>login(req)</code></td>
+      <td>POST</td>
+      <td><code>/api/user/login</code></td>
+      <td>接收 <code>{account, password}</code> JSON，呼叫 <code>LoginService.login()</code> 取得 JWT Token，包裝成 <code>ApiResponse.success("登入成功", {token: "..."})</code> 回傳。</td>
+    </tr>
+    <tr>
+      <td><code>create(req)</code></td>
+      <td>POST</td>
+      <td><code>/api/user/create</code></td>
+      <td>接收使用者註冊資料，呼叫 <code>RegisterService.create()</code>。與 JWT 無直接關係，但在 SecurityConfig 中設為 <code>permitAll()</code>。</td>
+    </tr>
+    <tr>
+      <td><code>checkEmail(email)</code></td>
+      <td>GET</td>
+      <td><code>/api/user/checkEmail</code></td>
+      <td>檢查 Email 是否已被註冊。供 Angular 前端的 AsyncValidator 即時驗證使用。同樣設為 <code>permitAll()</code>。</td>
+    </tr>
+  </table>
+
+  <div class="info-box">
+    <strong>登入成功的回應格式</strong>
+    <pre><code>{
+  <span class="st">"success"</span>: <span class="kw">true</span>,
+  <span class="st">"message"</span>: <span class="st">"登入成功"</span>,
+  <span class="st">"data"</span>: {
+    <span class="st">"token"</span>: <span class="st">"eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqb2huIi..."</span>
+  },
+  <span class="st">"timestamp"</span>: <span class="st">"2025-01-15T10:30:00"</span>
+}</code></pre>
+  </div>
+
+  <!-- ==================== 第六章：完整請求流程圖解 ==================== -->
+  <h2 id="ch6">6. 完整請求流程圖解</h2>
+
+  <h3>場景一：登入（取得 Token）</h3>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-content">
+      <strong>前端發送登入請求</strong><br>
+      Angular 發送 <code>POST /api/user/login</code>，Body 帶 <code>{account: "john", password: "123456"}</code>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-content">
+      <strong>SecurityFilterChain 放行</strong><br>
+      因為 <code>/api/user/login</code> 被設為 <code>permitAll()</code>，請求直接通過安全檢查
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-content">
+      <strong>JwtAuthenticationFilter 跳過</strong><br>
+      因為登入請求不會帶 <code>Authorization</code> Header，過濾器直接執行 <code>filterChain.doFilter()</code> 放行
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">4</div>
+    <div class="step-content">
+      <strong>LoginController.login() 接收請求</strong><br>
+      呼叫 <code>LoginService.login()</code>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">5</div>
+    <div class="step-content">
+      <strong>AuthenticationManager 驗證帳密</strong><br>
+      Spring Security 呼叫 <code>CustomUserDetailsService.loadUserByUsername("john")</code> → 查 DB → 取得使用者 → BCrypt 比對密碼
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">6</div>
+    <div class="step-content">
+      <strong>產生 JWT Token</strong><br>
+      驗證成功後，<code>JwtUtil.generateToken("john")</code> 產生 Token
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">7</div>
+    <div class="step-content">
+      <strong>回傳 Token</strong><br>
+      Controller 將 Token 包裝成 <code>ApiResponse.success("登入成功", {token: "eyJ..."})</code> 回傳給前端
+    </div>
+  </div>
+
+  <hr>
+
+  <h3>場景二：存取受保護的 API（帶 Token）</h3>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-content">
+      <strong>前端發送帶 Token 的請求</strong><br>
+      Angular 發送 <code>GET /api/todos</code>，Header 帶 <code>Authorization: Bearer eyJ...</code>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-content">
+      <strong>JwtAuthenticationFilter 攔截</strong><br>
+      偵測到 <code>Authorization</code> Header 以 <code>Bearer </code> 開頭，取出 Token
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-content">
+      <strong>驗證 Token</strong><br>
+      <code>jwtUtil.isTokenValid(token)</code> → 驗簽名 + 檢查是否過期
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">4</div>
+    <div class="step-content">
+      <strong>載入使用者並設定 SecurityContext</strong><br>
+      從 Token 取出帳號 → <code>userDetailsService.loadUserByUsername()</code> → 建立 Authentication → 放入 SecurityContext
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">5</div>
+    <div class="step-content">
+      <strong>SecurityFilterChain 檢查權限</strong><br>
+      <code>/api/todos/**</code> 要求 <code>authenticated()</code>，SecurityContext 中有認證資訊，通過！
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">6</div>
+    <div class="step-content">
+      <strong>到達 Controller</strong><br>
+      TodoController 正常處理請求並回傳資料
+    </div>
+  </div>
+
+  <hr>
+
+  <h3>場景三：未帶 Token 存取受保護的 API</h3>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-content">
+      <strong>前端發送請求（沒帶 Token）</strong><br>
+      <code>GET /api/todos</code>，沒有 <code>Authorization</code> Header
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-content">
+      <strong>JwtAuthenticationFilter 放行</strong><br>
+      沒有 <code>Authorization</code> Header，直接 <code>filterChain.doFilter()</code>，<strong>不設定 SecurityContext</strong>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-content">
+      <strong>SecurityFilterChain 拒絕</strong><br>
+      <code>/api/todos/**</code> 要求 <code>authenticated()</code>，但 SecurityContext 中沒有認證資訊 → 回傳 <strong>401 Unauthorized</strong> 或 <strong>403 Forbidden</strong>
+    </div>
+  </div>
+
+  <!-- ==================== 第七章：前端配合 ==================== -->
+  <h2 id="ch7">7. 前端配合事項</h2>
+
+  <h3>7.1 登入後儲存 Token</h3>
+  <p>登入成功後，前端需要把收到的 Token 儲存起來（通常放在 <code>localStorage</code>）：</p>
+
+  <div class="file-header">Angular 登入範例（TypeScript）</div>
+<pre><code><span class="cm">// login.component.ts 或 auth.service.ts</span>
+
+<span class="fn">login</span>(account: <span class="tp">string</span>, password: <span class="tp">string</span>) {
+  <span class="kw">return this</span>.http.<span class="fn">post</span>&lt;<span class="tp">any</span>&gt;(<span class="st">'http://localhost:8080/api/user/login'</span>, {
+    account,
+    password
+  }).<span class="fn">subscribe</span>(res => {
+    <span class="kw">if</span> (res.success) {
+      <span class="cm">// 儲存 Token</span>
+      localStorage.<span class="fn">setItem</span>(<span class="st">'token'</span>, res.data.token);
+      <span class="cm">// 導向首頁</span>
+      <span class="kw">this</span>.router.<span class="fn">navigate</span>([<span class="st">'/'</span>]);
+    }
+  });
+}</code></pre>
+
+  <h3>7.2 使用 HttpInterceptor 自動加上 Token</h3>
+  <p>為了避免每個 API 呼叫都手動加 <code>Authorization</code> Header，Angular 可以用 HttpInterceptor 統一處理：</p>
+
+  <div class="file-header">Angular HttpInterceptor 範例</div>
+<pre><code><span class="cm">// auth.interceptor.ts</span>
+
+<span class="kw">import</span> { HttpInterceptorFn } <span class="kw">from</span> <span class="st">'@angular/common/http'</span>;
+
+<span class="kw">export const</span> <span class="fn">authInterceptor</span>: <span class="tp">HttpInterceptorFn</span> = (req, next) => {
+  <span class="kw">const</span> token = localStorage.<span class="fn">getItem</span>(<span class="st">'token'</span>);
+
+  <span class="kw">if</span> (token) {
+    <span class="kw">const</span> cloned = req.<span class="fn">clone</span>({
+      <span class="fn">setHeaders</span>: {
+        Authorization: <span class="st">`Bearer ${token}`</span>
+      }
+    });
+    <span class="kw">return</span> <span class="fn">next</span>(cloned);
+  }
+
+  <span class="kw">return</span> <span class="fn">next</span>(req);
+};</code></pre>
+
+  <div class="file-header">在 app.config.ts 中註冊 Interceptor</div>
+<pre><code><span class="cm">// app.config.ts</span>
+
+<span class="kw">import</span> { provideHttpClient, withInterceptors } <span class="kw">from</span> <span class="st">'@angular/common/http'</span>;
+<span class="kw">import</span> { authInterceptor } <span class="kw">from</span> <span class="st">'./auth.interceptor'</span>;
+
+<span class="kw">export const</span> appConfig = {
+  providers: [
+    <span class="fn">provideHttpClient</span>(<span class="fn">withInterceptors</span>([authInterceptor]))
+  ]
+};</code></pre>
+
+  <h3>7.3 處理 Token 過期</h3>
+  <p>當 Token 過期（24 小時後），後端會回傳 401 錯誤。前端可以在 Interceptor 中統一處理：</p>
+
+  <div class="file-header">處理 401 回應</div>
+<pre><code><span class="cm">// 在 authInterceptor 中加入錯誤處理</span>
+
+<span class="kw">import</span> { catchError, throwError } <span class="kw">from</span> <span class="st">'rxjs'</span>;
+
+<span class="kw">export const</span> <span class="fn">authInterceptor</span>: <span class="tp">HttpInterceptorFn</span> = (req, next) => {
+  <span class="kw">const</span> token = localStorage.<span class="fn">getItem</span>(<span class="st">'token'</span>);
+
+  <span class="kw">const</span> authReq = token
+    ? req.<span class="fn">clone</span>({ <span class="fn">setHeaders</span>: { Authorization: <span class="st">`Bearer ${token}`</span> } })
+    : req;
+
+  <span class="kw">return</span> <span class="fn">next</span>(authReq).<span class="fn">pipe</span>(
+    <span class="fn">catchError</span>(err => {
+      <span class="kw">if</span> (err.status === <span class="nb">401</span>) {
+        <span class="cm">// Token 過期或無效，清除並導向登入頁</span>
+        localStorage.<span class="fn">removeItem</span>(<span class="st">'token'</span>);
+        window.location.href = <span class="st">'/login'</span>;
+      }
+      <span class="kw">return</span> <span class="fn">throwError</span>(() => err);
+    })
+  );
+};</code></pre>
+
+  <h3>7.4 前後端互動總結</h3>
+
+  <table>
+    <tr><th>階段</th><th>前端動作</th><th>後端處理</th></tr>
+    <tr>
+      <td>註冊</td>
+      <td>POST <code>/api/user/create</code></td>
+      <td>permitAll，儲存帳號到 DB</td>
+    </tr>
+    <tr>
+      <td>登入</td>
+      <td>POST <code>/api/user/login</code></td>
+      <td>permitAll，驗證帳密 → 回傳 JWT</td>
+    </tr>
+    <tr>
+      <td>儲存 Token</td>
+      <td>存入 <code>localStorage</code></td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td>呼叫 API</td>
+      <td>Header 帶 <code>Bearer token</code></td>
+      <td>JwtFilter 驗證 → 放行到 Controller</td>
+    </tr>
+    <tr>
+      <td>Token 過期</td>
+      <td>收到 401 → 清除 Token → 導向登入</td>
+      <td>JwtFilter 驗證失敗 → 401</td>
+    </tr>
+  </table>
+
+  <!-- ==================== 附錄 ==================== -->
+  <h2>附錄：各元件關聯圖</h2>
+
+  <div class="diagram">
+<pre>
+┌─────────────────────────────────────────────────────────────────────┐
+│                        Spring Security 框架                         │
+│                                                                     │
+│  ┌───────────────────────────────────────────────────────────────┐  │
+│  │                    SecurityFilterChain                         │  │
+│  │                    (SecurityConfig 定義)                       │  │
+│  │                                                               │  │
+│  │  ┌─────────────────┐    ┌──────────────────────────────────┐  │  │
+│  │  │   CORS Filter   │───►│  JwtAuthenticationFilter         │  │  │
+│  │  │ (允許 :4200)     │    │  (驗證 Token，設定 SecurityContext)│  │  │
+│  │  └─────────────────┘    └──────────┬───────────────────────┘  │  │
+│  │                                    │                          │  │
+│  │                          ┌─────────┴─────────┐                │  │
+│  │                          │    使用            │                │  │
+│  │                    ┌─────┴─────┐   ┌─────────┴──────────┐     │  │
+│  │                    │  JwtUtil  │   │ CustomUserDetails   │     │  │
+│  │                    │ (解析Token)│   │ Service             │     │  │
+│  │                    └───────────┘   │ (查 DB 載入使用者)   │     │  │
+│  │                                    └─────────┬──────────┘     │  │
+│  │                                              │                │  │
+│  │                                    ┌─────────┴──────────┐     │  │
+│  │                                    │    UserMapper       │     │  │
+│  │                                    │   (MyBatis → MySQL) │     │  │
+│  │                                    └────────────────────┘     │  │
+│  └───────────────────────────────────────────────────────────────┘  │
+│                                                                     │
+│  ┌───────────────────┐    ┌─────────────────────────────────────┐   │
+│  │ AuthenticationMgr │    │         PasswordEncoder             │   │
+│  │ (驗證帳密的入口)   │    │        (BCrypt, 強度 12)             │   │
+│  │ LoginService 使用  │    │    Security 自動使用來比對密碼       │   │
+│  └───────────────────┘    └─────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────┐
+│                         業務邏輯層                                   │
+│                                                                     │
+│  ┌─────────────────┐         ┌──────────────────┐                   │
+│  │ LoginController │────────►│   LoginService   │                   │
+│  │  POST /login    │         │  authenticate()  │                   │
+│  │  回傳 Token      │         │  generateToken() │                   │
+│  └─────────────────┘         └──────────────────┘                   │
+└─────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────┐
+│                         設定檔                                      │
+│                                                                     │
+│  application.yml                                                    │
+│  ├── jwt.secret     → JwtUtil 使用的簽名密鑰                        │
+│  └── jwt.expiration → Token 有效期（24hr）                          │
+└─────────────────────────────────────────────────────────────────────┘
+</pre>
+  </div>
+
+  <hr style="margin-top: 60px;">
+  <p style="text-align: center; color: #95a5a6; font-size: 0.85em;">
+    本文件由 Claude Code 產生 | 專案：angular-learning-api | Spring Boot 3.4.1 + Spring Security 6 + JWT
+  </p>
+
+</div>
+</body>
+</html>

@@ -1,7 +1,6 @@
 package com.example.api.controller;
 
 import com.example.api.dto.UserDto;
-import com.example.api.generate.po.UserEntity;
 import com.example.api.model.ApiResponse;
 import com.example.api.service.LoginService;
 import com.example.api.service.RegisterService;
@@ -27,12 +26,14 @@ public class LoginController {
   private RegisterService registerService;
 
   /**
-   * 登入帳號
+   * 登入帳號，驗證成功後回傳 JWT Token
    */
   @PostMapping("/login")
   public ResponseEntity<?> login(@RequestBody UserDto req) {
-    UserEntity login = loginService.login(req);
-    return ResponseEntity.ok(ApiResponse.success(login));
+    String token = loginService.login(req);
+    Map<String, String> data = new HashMap<>();
+    data.put("token", token);
+    return ResponseEntity.ok(ApiResponse.success("登入成功", data));
   }
 
   /**
@@ -54,6 +55,4 @@ public class LoginController {
     }
     return ResponseEntity.ok(response);
   }
-
-
 }
