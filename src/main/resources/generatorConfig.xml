@@ -46,7 +46,7 @@
     <!--    </javaClientGenerator>-->
 
     <!-- 7. table -->
-    <table schema="angular_database" tableName="user" domainObjectName="User"
+    <table schema="angular_database" tableName="users" domainObjectName="User"
       enableCountByExample="false"
       enableUpdateByExample="false"
       enableDeleteByExample="false"
