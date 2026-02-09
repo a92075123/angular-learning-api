@@ -13,6 +13,7 @@ target/
 *.swp
 *.swo
 
+
 # Eclipse
 .apt_generated
 .classpath
@@ -39,3 +40,7 @@ mvnw.cmd
 application-local.yml
 application-*.yml
 !application.yml
+
+# claude
+.claude
+CLAUDE.md
