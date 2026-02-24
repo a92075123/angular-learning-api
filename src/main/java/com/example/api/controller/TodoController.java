@@ -8,6 +8,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -27,8 +29,8 @@ public class TodoController {
    * 取得所有待辦事項
    */
   @GetMapping("/getAll")
-  public ResponseEntity<?> getAll() {
-    List<TodoDto> list = todoService.findAll();
+  public ResponseEntity<?> getAll(@AuthenticationPrincipal UserDetails userDetails) {
+    List<TodoDto> list = todoService.findAll(userDetails);
     return ResponseEntity.ok(ApiResponse.success(list));
   }
 
@@ -49,9 +51,11 @@ public class TodoController {
    * 新增待辦事項
    */
   @PostMapping("/create")
-  public ResponseEntity<?> create(@RequestBody TodoDto todo) {
+  public ResponseEntity<?> create(@RequestBody TodoDto todo,
+      @AuthenticationPrincipal UserDetails userDetails) {
     log.info("收到新增請求: {}", todo);
-    todoService.create(todo);
+    String author = userDetails.getUsername();
+    todoService.create(todo, author);
     return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("新增成功"));
   }
 

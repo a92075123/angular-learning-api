@@ -20,14 +20,14 @@ import org.apache.ibatis.annotations.Update;
 @Mapper
 public interface TodoMapper {
 
-  @Select("SELECT * FROM todos ORDER BY sort_no ASC ")
-  List<TodoDto> findAll();
+  @Select("SELECT * FROM todos WHERE author = #{author} ORDER BY sort_no ASC ")
+  List<TodoDto> findAll(@Param("author") String author);
 
   @Select("SELECT * FROM todos WHERE todotitle = #{todotitle} ORDER BY sort_no ASC")
   List<TodoDto> findByTitle(@Param("todotitle") String todotitle);
 
-  @Insert("INSERT INTO todos (todotitle, todocontent, created_at, updated_at, sort_no) " +
-      "VALUES (#{todotitle}, #{todocontent},NOW(), NOW(),(SELECT COALESCE(MAX(sort_no), 0) + 1 FROM (SELECT sort_no FROM todos) AS temp))")
+  @Insert("INSERT INTO todos (todotitle, todocontent, auther,created_at, updated_at, sort_no) " +
+      "VALUES (#{todotitle}, #{todocontent},#{auther},NOW(), NOW(),(SELECT COALESCE(MAX(sort_no), 0) + 1 FROM (SELECT sort_no FROM todos) AS temp))")
   @Options(useGeneratedKeys = true, keyProperty = "id")
   int insert(TodoEntity todo);
 

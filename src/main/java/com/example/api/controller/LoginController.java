@@ -4,6 +4,7 @@ import com.example.api.dto.UserDto;
 import com.example.api.model.ApiResponse;
 import com.example.api.service.LoginService;
 import com.example.api.service.RegisterService;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +36,20 @@ public class LoginController {
     data.put("token", token);
     return ResponseEntity.ok(ApiResponse.success("登入成功", data));
   }
+
+  /**
+   * 登出：將當前 Token 加入黑名單
+   */
+  @PostMapping("/logout")
+  public ResponseEntity<?> logout(HttpServletRequest request) {
+    String authHeader = request.getHeader("Authorization");
+    if (authHeader != null && authHeader.startsWith("Bearer ")) {
+      String token = authHeader.substring(7);
+      loginService.logout(token);
+    }
+    return ResponseEntity.ok(ApiResponse.success("登出成功"));
+  }
+
 
   /**
    * 註冊帳號

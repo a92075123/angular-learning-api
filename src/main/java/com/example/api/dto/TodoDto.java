@@ -9,6 +9,8 @@ public class TodoDto {
 
   private Long id;
 
+  private String author;
+
   private String todotitle;
 
   private String todocontent;

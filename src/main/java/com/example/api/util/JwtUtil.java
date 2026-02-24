@@ -3,6 +3,7 @@ package com.example.api.util;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
 import java.util.Base64;
 import java.util.Date;
 import javax.crypto.SecretKey;
@@ -12,13 +13,17 @@ import org.springframework.stereotype.Component;
 @Component
 public class JwtUtil {
 
-  private final SecretKey secretKey;
-  private final long expiration;
+  @Value("${jwt.secret}")
+  private String secret;
 
-  public JwtUtil(@Value("${jwt.secret}") String secret,
-      @Value("${jwt.expiration}") long expiration) {
+  @Value("${jwt.expiration}")
+  private long expiration;
+
+  private SecretKey secretKey;
+
+  @PostConstruct
+  public void init() {
     this.secretKey = Keys.hmacShaKeyFor(Base64.getDecoder().decode(secret));
-    this.expiration = expiration;
   }
 
   /**
@@ -38,6 +43,13 @@ public class JwtUtil {
    */
   public String extractAccount(String token) {
     return extractClaims(token).getSubject();
+  }
+
+  /**
+   * 取得 Token 的過期時間
+   */
+  public Date getExpiration(String token) {
+    return extractClaims(token).getExpiration();
   }
 
   /**

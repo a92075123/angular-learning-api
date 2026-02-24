@@ -1,11 +1,13 @@
 package com.example.api.config.security;
 
+import com.example.api.service.TokenBlacklistService;
 import com.example.api.util.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -16,13 +18,14 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-  private final JwtUtil jwtUtil;
-  private final CustomUserDetailsService userDetailsService;
+  @Autowired
+  private JwtUtil jwtUtil;
 
-  public JwtAuthenticationFilter(JwtUtil jwtUtil, CustomUserDetailsService userDetailsService) {
-    this.jwtUtil = jwtUtil;
-    this.userDetailsService = userDetailsService;
-  }
+  @Autowired
+  private CustomUserDetailsService userDetailsService;
+
+  @Autowired
+  private TokenBlacklistService tokenBlacklistService;
 
   @Override
   protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
@@ -36,6 +39,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     String token = authHeader.substring(7);
+
+    // 檢查 Token 是否已被登出（在黑名單中）
+    if (tokenBlacklistService.isBlacklisted(token)) {
+      filterChain.doFilter(request, response);
+      return;
+    }
 
     if (jwtUtil.isTokenValid(token)) {
       String account = jwtUtil.extractAccount(token);

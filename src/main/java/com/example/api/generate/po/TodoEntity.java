@@ -3,64 +3,73 @@ package com.example.api.generate.po;
 import java.util.Date;
 
 public class TodoEntity {
+    private Long id;
 
-  private Long id;
+    private String author;
 
-  private String todotitle;
+    private String todotitle;
 
-  private String todocontent;
+    private String todocontent;
 
-  private Date createdAt;
+    private Date createdAt;
 
-  private Date updatedAt;
+    private Date updatedAt;
 
-  private Integer sortNo;
+    private Integer sortNo;
 
-  public Long getId() {
-    return id;
-  }
+    public Long getId() {
+        return id;
+    }
 
-  public void setId(Long id) {
-    this.id = id;
-  }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-  public String getTodotitle() {
-    return todotitle;
-  }
+    public String getAuthor() {
+        return author;
+    }
 
-  public void setTodotitle(String todotitle) {
-    this.todotitle = todotitle == null ? null : todotitle.trim();
-  }
+    public void setAuthor(String author) {
+        this.author = author == null ? null : author.trim();
+    }
 
-  public String getTodocontent() {
-    return todocontent;
-  }
+    public String getTodotitle() {
+        return todotitle;
+    }
 
-  public void setTodocontent(String todocontent) {
-    this.todocontent = todocontent == null ? null : todocontent.trim();
-  }
+    public void setTodotitle(String todotitle) {
+        this.todotitle = todotitle == null ? null : todotitle.trim();
+    }
 
-  public Date getCreatedAt() {
-    return createdAt;
-  }
+    public String getTodocontent() {
+        return todocontent;
+    }
 
-  public void setCreatedAt(Date createdAt) {
-    this.createdAt = createdAt;
-  }
+    public void setTodocontent(String todocontent) {
+        this.todocontent = todocontent == null ? null : todocontent.trim();
+    }
 
-  public Date getUpdatedAt() {
-    return updatedAt;
-  }
+    public Date getCreatedAt() {
+        return createdAt;
+    }
 
-  public void setUpdatedAt(Date updatedAt) {
-    this.updatedAt = updatedAt;
-  }
+    public void setCreatedAt(Date createdAt) {
+        this.createdAt = createdAt;
+    }
 
-  public Integer getSortNo() {
-    return sortNo;
-  }
+    public Date getUpdatedAt() {
+        return updatedAt;
+    }
 
-  public void setSortNo(Integer sortNo) {
-    this.sortNo = sortNo;
-  }
+    public void setUpdatedAt(Date updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public Integer getSortNo() {
+        return sortNo;
+    }
+
+    public void setSortNo(Integer sortNo) {
+        this.sortNo = sortNo;
+    }
 }

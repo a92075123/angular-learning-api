@@ -14,7 +14,9 @@ public enum ResponseStatus {
 
   REPEAT_ACCOUNT("此帳號以重複註冊過"),
 
-  PASSWORD_ERROR("密碼錯誤");
+  PASSWORD_ERROR("密碼錯誤"),
+
+  ARTICLE_NOT_FOUND("文章不存在");
 
   private String message;
 

@@ -2,6 +2,7 @@ package com.example.api.config.security;
 
 import com.example.api.generate.po.UserEntity;
 import com.example.api.mappers.UserMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -12,11 +13,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
 
-  private final UserMapper userMapper;
-
-  public CustomUserDetailsService(UserMapper userMapper) {
-    this.userMapper = userMapper;
-  }
+  @Autowired
+  private UserMapper userMapper;
 
   @Override
   public UserDetails loadUserByUsername(String account) throws UsernameNotFoundException {

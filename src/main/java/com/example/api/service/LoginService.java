@@ -4,21 +4,24 @@ import com.example.api.config.exception.GlobalException;
 import com.example.api.config.exception.ResponseStatus;
 import com.example.api.dto.UserDto;
 import com.example.api.util.JwtUtil;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 @Service
 public class LoginService {
 
-  private final AuthenticationManager authenticationManager;
-  private final JwtUtil jwtUtil;
+  @Autowired
+  private AuthenticationManager authenticationManager;
 
-  public LoginService(AuthenticationManager authenticationManager, JwtUtil jwtUtil) {
-    this.authenticationManager = authenticationManager;
-    this.jwtUtil = jwtUtil;
-  }
+  @Autowired
+  private JwtUtil jwtUtil;
+
+  @Autowired
+  private TokenBlacklistService tokenBlacklistService;
 
   public String login(UserDto user) {
     try {
@@ -33,5 +36,13 @@ public class LoginService {
     }
 
     return jwtUtil.generateToken(user.getAccount());
+  }
+
+  /**
+   * 登出：將 Token 加入黑名單，並清除當前的認證資訊
+   */
+  public void logout(String token) {
+    tokenBlacklistService.add(token, jwtUtil.getExpiration(token));
+    SecurityContextHolder.clearContext();
   }
 }

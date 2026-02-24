@@ -8,6 +8,7 @@ import com.example.api.mappers.TodoMapper;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,8 +29,9 @@ public class TodoService {
   /**
    * 取得所有待辦事項
    */
-  public List<TodoDto> findAll() {
-    return todoMapper.findAll();
+  public List<TodoDto> findAll(UserDetails userDetails) {
+    String author = userDetails.getUsername() == "" ? "" : userDetails.getUsername();
+    return todoMapper.findAll(author);
   }
 
   /**
@@ -42,10 +44,11 @@ public class TodoService {
   /**
    * 新增待辦事項
    */
-  public void create(TodoDto todo) {
+  public void create(TodoDto todo, String author) {
     TodoEntity entity = new TodoEntity();
     entity.setTodotitle(todo.getTodotitle());
     entity.setTodocontent(todo.getTodocontent());
+    entity.setAuthor(author);
     int count = todoMapper.insert(entity);
     if (count == 0) {
       throw new GlobalException(ResponseStatus.INSERT_ERROR.getMessage());
